@@ -4,8 +4,8 @@ import cv2
 import numpy as np
 import scipy.io as sio
 
-from DB.base import BaseDataSet
-from DB.utils import order_points_clockwise, get_datalist
+from base import BaseDataSet
+from utils import order_points_clockwise, get_datalist
 
 
 class ICDAR2015Dataset(BaseDataSet):
