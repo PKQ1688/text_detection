@@ -7,7 +7,7 @@ import anyconfig
 
 
 def init_args():
-    parser = argparse.ArgumentParser(description='DBNet.pytorch')
+    parser = argparse.ArgumentParser(description='DB')
     parser.add_argument('--config_file', default='config/icdar2015_resnet18_FPN_DBhead_polyLR.yaml', type=str)
     parser.add_argument('--local_rank', dest='local_rank', default=0, type=int, help='Use distributed training')
 
@@ -57,15 +57,16 @@ def main(config):
 if __name__ == '__main__':
     import sys
 
-    project = 'DBNet.pytorch'  # 工作项目根目录
+    project = 'DB'  # 工作项目根目录
     sys.path.append(os.getcwd().split(project)[0] + project)
 
     from utils import parse_config
 
     args = init_args()
+    # print(args.config_file)
     assert os.path.exists(args.config_file)
-    print(args)
+    # print(args)
     config = anyconfig.load(open(args.config_file, 'rb'))
     if 'base' in config:
         config = parse_config(config)
-    # main(config)
+    main(config)

@@ -1,6 +1,3 @@
-# -*- coding: utf-8 -*-
-# @Time    : 2019/8/23 21:56
-# @Author  : zhoujun
 from torch import nn
 
 from models.modules.basic_loss import BalanceCrossEntropyLoss, MaskL1Loss, DiceLoss

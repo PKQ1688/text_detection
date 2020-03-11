@@ -1,7 +1,7 @@
 import os
 import sys
 
-project = 'DBNet.pytorch'  # 工作项目根目录
+project = 'DB'  # 工作项目根目录
 sys.path.append(os.getcwd().split(project)[0] + project)
 
 import argparse
@@ -58,7 +58,7 @@ class EVAL():
 
 
 def init_args():
-    parser = argparse.ArgumentParser(description='DBNet.pytorch')
+    parser = argparse.ArgumentParser(description='DB')
     parser.add_argument('--model_path', required=True, type=str)
     args = parser.parse_args()
     return args

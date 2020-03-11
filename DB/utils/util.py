@@ -10,7 +10,7 @@ import numpy as np
 def setup_logger(log_file_path: str = None):
     import logging
     logging._warn_preinit_stderr = 0
-    logger = logging.getLogger('DBNet.pytorch')
+    logger = logging.getLogger('DB')
     formatter = logging.Formatter('%(asctime)s %(name)s %(levelname)s: %(message)s')
     ch = logging.StreamHandler()
     ch.setFormatter(formatter)
