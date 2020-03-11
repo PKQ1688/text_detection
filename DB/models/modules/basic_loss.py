@@ -1,6 +1,3 @@
-# -*- coding: utf-8 -*-
-# @Time    : 2019/12/4 14:39
-# @Author  : zhoujun
 import torch
 import torch.nn as nn
 

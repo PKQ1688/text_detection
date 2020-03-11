@@ -1,14 +1,11 @@
-# -*- coding: utf-8 -*-
-# @Time    : 2019/8/23 21:54
-# @Author  : zhoujun
 import pathlib
 
 import cv2
 import numpy as np
 import scipy.io as sio
 
-from base import BaseDataSet
-from utils import order_points_clockwise, get_datalist
+from DB.base import BaseDataSet
+from DB.utils import order_points_clockwise, get_datalist
 
 
 class ICDAR2015Dataset(BaseDataSet):

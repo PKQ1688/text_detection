@@ -1,7 +1,3 @@
-# -*- coding: utf-8 -*-
-# @Time    : 2019/8/24 12:06
-# @Author  : zhoujun
-
 import os
 import sys
 project = 'DBNet.pytorch'  # 工作项目根目录

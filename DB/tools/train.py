@@ -1,7 +1,3 @@
-# -*- coding: utf-8 -*-
-# @Time    : 2019/8/23 22:00
-# @Author  : zhoujun
-
 from __future__ import print_function
 
 import argparse

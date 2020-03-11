@@ -1,7 +1,3 @@
-# -*- coding: utf-8 -*-
-# @Time    : 2019/8/23 21:52
-# @Author  : zhoujun
-
 import math
 import numbers
 import random

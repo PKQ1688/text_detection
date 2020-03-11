@@ -1,7 +1,3 @@
-# -*- coding: utf-8 -*-
-# @Time    : 2019/12/7 14:46
-# @Author  : zhoujun
-
 import numpy as np
 import cv2
 import os

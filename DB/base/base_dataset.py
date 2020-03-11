@@ -1,6 +1,3 @@
-# -*- coding: utf-8 -*-
-# @Time    : 2019/12/4 13:12
-# @Author  : zhoujun
 import copy
 from torch.utils.data import Dataset
 from data_loader.modules import *

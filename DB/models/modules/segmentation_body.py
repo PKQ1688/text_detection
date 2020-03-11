@@ -1,6 +1,3 @@
-# -*- coding: utf-8 -*-
-# @Time    : 2019/9/13 10:29
-# @Author  : zhoujun
 import torch
 import torch.nn.functional as F
 from torch import nn
