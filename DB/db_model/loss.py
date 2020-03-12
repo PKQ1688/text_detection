@@ -2,7 +2,7 @@
 # @author :adolf
 from torch import nn
 
-from DB.base_model.basic_loss import BalanceCrossEntropyLoss, MaskL1Loss, DiceLoss
+from base_model.basic_loss import BalanceCrossEntropyLoss, MaskL1Loss, DiceLoss
 
 
 class DBLoss(nn.Module):

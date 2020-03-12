@@ -5,24 +5,6 @@ import torch.nn as nn
 
 
 class BalanceCrossEntropyLoss(nn.Module):
-    '''
-    Balanced cross entropy loss.
-    Shape:
-        - Input: :math:`(N, 1, H, W)`
-        - GT: :math:`(N, 1, H, W)`, same shape as the input
-        - Mask: :math:`(N, H, W)`, same spatial shape as the input
-        - Output: scalar.
-
-    Examples::
-
-        >>> m = nn.Sigmoid()
-        >>> loss = nn.BCELoss()
-        >>> input = torch.randn(3, requires_grad=True)
-        >>> target = torch.empty(3).random_(2)
-        >>> output = loss(m(input), target)
-        >>> output.backward()
-    '''
-
     def __init__(self, negative_ratio=3.0, eps=1e-6):
         super(BalanceCrossEntropyLoss, self).__init__()
         self.negative_ratio = negative_ratio
@@ -33,12 +15,6 @@ class BalanceCrossEntropyLoss(nn.Module):
                 gt: torch.Tensor,
                 mask: torch.Tensor,
                 return_origin=False):
-        '''
-        Args:
-            pred: shape :math:`(N, 1, H, W)`, the prediction of network
-            gt: shape :math:`(N, 1, H, W)`, the target
-            mask: shape :math:`(N, H, W)`, the mask indicates positive regions
-        '''
         positive = (gt * mask).byte()
         negative = ((1 - gt) * mask).byte()
         positive_count = int(positive.float().sum())
