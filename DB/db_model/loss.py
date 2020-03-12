@@ -1,12 +1,14 @@
+# -*- coding:utf-8 -*-
+# @author :adolf
 from torch import nn
 
-from models.modules.basic_loss import BalanceCrossEntropyLoss, MaskL1Loss, DiceLoss
+from DB.base_model.basic_loss import BalanceCrossEntropyLoss, MaskL1Loss, DiceLoss
 
 
 class DBLoss(nn.Module):
     def __init__(self, alpha=1.0, beta=10, ohem_ratio=3, reduction='mean', eps=1e-6):
         """
-        Implement PSE Loss.
+        Implement DB Loss.
         :param alpha: binary_map loss 前面的系数
         :param beta: threshold_map loss 前面的系数
         :param ohem_ratio: OHEM的比例

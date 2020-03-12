@@ -1,8 +1,10 @@
+# -*- coding:utf-8 -*-
+# @author :adolf
 import torch
 import torch.nn.functional as F
 from torch import nn
 
-from .basic import ConvBnRelu
+from DB.base_model.basic_conv import ConvBnRelu
 
 
 class FPN(nn.Module):
