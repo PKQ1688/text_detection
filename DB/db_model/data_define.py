@@ -1,16 +1,8 @@
 # -*- coding:utf-8 -*-
 # @author :adolf
 import os
-import sys
 
-import numpy as np
-
-import torch
-from PIL import Image
-
-import torch.utils.data as data
-import detection_util.utils as utils
-from data_util.utils import order_points_clockwise
+from data_util import *
 import cv2
 
 
@@ -51,9 +43,9 @@ class CurrentOcrData(object):
             for k, v in targets.items():
                 if k not in self.filter_key:
                     targets_dict[k] = v
-            return targets_dict
+            return targets['img'], targets_dict
         else:
-            return targets
+            return targets['img'], targets
 
     def get_annotation(self, gt_path):
         boxes = list()

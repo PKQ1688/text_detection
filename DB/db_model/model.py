@@ -29,7 +29,7 @@ class DBModel(nn.Module):
         :param model_config: 模型配置
         """
         super().__init__()
-        print('1111')
+        # print('1111')
         backbone = model_config['backbone']
         pretrained = model_config['pretrained']
         segmentation_body = model_config['segmentation_body']['type']

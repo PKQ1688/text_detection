@@ -2,6 +2,7 @@ import numpy as np
 import imgaug
 import imgaug.augmenters as iaa
 
+
 class AugmenterBuilder(object):
     def __init__(self):
         pass
@@ -27,7 +28,7 @@ class AugmenterBuilder(object):
         return obj
 
 
-class IaaAugment():
+class IaaAugment(object):
     def __init__(self, augmenter_args):
         self.augmenter_args = augmenter_args
         self.augmenter = AugmenterBuilder().build(self.augmenter_args)

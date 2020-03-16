@@ -11,6 +11,8 @@ import torch.distributed as dist
 import errno
 import os
 
+import numpy as np
+
 
 class SmoothedValue(object):
     """Track a series of values and provide access to smoothed values over a
@@ -213,3 +215,20 @@ def reduce_dict(input_dict, average=True):
             values /= world_size
         reduced_dict = {k: v for k, v in zip(names, values)}
     return reduced_dict
+
+
+def collate_fn(batch):
+    return tuple(zip(*batch))
+
+
+def cal_text_score(texts, gt_texts, training_masks, running_metric_text, thred=0.5):
+    training_masks = training_masks.data.cpu().numpy()
+    pred_text = texts.data.cpu().numpy() * training_masks
+    pred_text[pred_text <= thred] = 0
+    pred_text[pred_text > thred] = 1
+    pred_text = pred_text.astype(np.int32)
+    gt_text = gt_texts.data.cpu().numpy() * training_masks
+    gt_text = gt_text.astype(np.int32)
+    running_metric_text.update(gt_text, pred_text)
+    score_text, _ = running_metric_text.get_scores()
+    return score_text
