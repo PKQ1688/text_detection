@@ -80,7 +80,7 @@ def train_one_epoch(model, optimizer, criterion, data_loader, device, epoch, pri
         metric_logger.update(**loss_dict_reduced)
         metric_logger.update(lr=optimizer.param_groups[0]["lr"])
 
-        break
+        # break
 
         # loss_str = 'loss: {:.4f}, '.format(loss_dict['loss'].item())
         # for idx, (key, value) in enumerate(loss_dict.items()):

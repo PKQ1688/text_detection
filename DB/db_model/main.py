@@ -67,7 +67,7 @@ def main():
     dataset = torch.utils.data.Subset(dataset, indices[:-50])
     dataset_test = torch.utils.data.Subset(dataset_test, indices[-50:])
 
-    # print('333333333', len(dataset) + 50)
+    print('333333333', len(dataset))
     data_loader = torch.utils.data.DataLoader(dataset, batch_size=4,
                                               shuffle=True, num_workers=4)  # ,
     # collate_fn=collate_fn)
@@ -77,7 +77,7 @@ def main():
     # collate_fn=collate_fn)
 
     model_config = {
-        'backbone': 'deformable_resnet18',
+        'backbone': 'deformable_resnet50',
         'pretrained': True,
         'segmentation_body': {'type': 'FPN', 'args': {'inner_channels': 256}},
         'segmentation_head': {'type': 'DBHead', 'args': {'out_channels': 2, 'k': 50}}

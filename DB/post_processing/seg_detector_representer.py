@@ -6,7 +6,7 @@ import pyclipper
 from shapely.geometry import Polygon
 
 
-class SegDetectorRepresenter():
+class SegDetectorRepresenter(object):
     def __init__(self, thresh=0.3, box_thresh=0.7, max_candidates=1000, unclip_ratio=1.5):
         self.min_size = 3
         self.thresh = thresh
@@ -14,7 +14,7 @@ class SegDetectorRepresenter():
         self.max_candidates = max_candidates
         self.unclip_ratio = unclip_ratio
 
-    def __call__(self, batch, pred, is_output_polygon=False):
+    def represent(self, batch, pred, is_output_polygon=False):
         '''
         batch: (image, polygons, ignore_tags
         batch: a dict produced by dataloaders.
@@ -166,6 +166,8 @@ class SegDetectorRepresenter():
     def box_score_fast(self, bitmap, _box):
         h, w = bitmap.shape[:2]
         box = _box.copy()
+
+        # box = np.squeeze(box)
         xmin = np.clip(np.floor(box[:, 0].min()).astype(np.int), 0, w - 1)
         xmax = np.clip(np.ceil(box[:, 0].max()).astype(np.int), 0, w - 1)
         ymin = np.clip(np.floor(box[:, 1].min()).astype(np.int), 0, h - 1)
