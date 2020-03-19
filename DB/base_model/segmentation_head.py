@@ -17,7 +17,7 @@ class ConvHead(nn.Module):
 
 
 class DBHead(nn.Module):
-    def __init__(self, in_channels, out_channels, k = 50):
+    def __init__(self, in_channels, out_channels, k=50):
         super().__init__()
         self.k = k
         self.binarize = nn.Sequential(

@@ -6,7 +6,7 @@ import sys
 
 sys.path.append('.')
 from collections import namedtuple
-import rrc_evaluation_funcs
+import ocr_evaluation.rrc_evaluation_funcs as rrc_evaluation_funcs
 import importlib
 from shapely.geometry import Polygon as plg
 import numpy as np

@@ -16,7 +16,9 @@ import os
 from torchvision import transforms as T
 from db_model.loss import DBLoss
 
-os.environ['CUDA_VISIBLE_DEVICES'] = "0"
+import torch.nn as nn
+
+os.environ['CUDA_VISIBLE_DEVICES'] = "0,3,4,5"
 
 
 def get_transforms(transforms_config):
@@ -36,7 +38,7 @@ def main():
     device = torch.device("cuda") if torch.cuda.is_available() else torch.device("cpu")
 
     num_classes = 2
-    root_path = '/home/shizai/data2/ocr_data/rctw/'
+    root_path = '/home/shizai/data2/ocr_data/icdar2015/train/'
     pre_processes = [{'type': 'IaaAugment', 'args': [{'type': 'Fliplr', 'args': {'p': 0.5}},
                                                      {'type': 'Affine', 'args': {'rotate': [-10, 10]}},
                                                      {'type': 'Resize', 'args': {'size': [0.5, 3]}}]},
@@ -63,12 +65,12 @@ def main():
                                   filter_keys=filter_keys,
                                   ignore_tags=ignore_tags)
 
-    indices = torch.randperm(len(dataset)).tolist()
-    dataset = torch.utils.data.Subset(dataset, indices[:-50])
-    dataset_test = torch.utils.data.Subset(dataset_test, indices[-50:])
+    # indices = torch.randperm(len(dataset)).tolist()
+    # dataset = torch.utils.data.Subset(dataset, indices[:-50])
+    # dataset_test = torch.utils.data.Subset(dataset_test, indices[-50:])
 
     print('333333333', len(dataset))
-    data_loader = torch.utils.data.DataLoader(dataset, batch_size=4,
+    data_loader = torch.utils.data.DataLoader(dataset, batch_size=16,
                                               shuffle=True, num_workers=4)  # ,
     # collate_fn=collate_fn)
 
@@ -82,11 +84,14 @@ def main():
         'segmentation_body': {'type': 'FPN', 'args': {'inner_channels': 256}},
         'segmentation_head': {'type': 'DBHead', 'args': {'out_channels': 2, 'k': 50}}
     }
-    model = DBModel(model_config=model_config).to(device)
+    model = DBModel(model_config=model_config)
+    model = nn.DataParallel(model)
+    model.to(device)
+
     # model.load_state_dict(torch.load('model_use/gen_20000.pth'))
-    print(model)
+    # print(model)
     params = [p for p in model.parameters() if p.requires_grad]
-    optimizer = torch.optim.SGD(params, lr=1e-5, momentum=0.9, weight_decay=0.0005)
+    optimizer = torch.optim.SGD(params, lr=1e-3, momentum=0.9, weight_decay=0.0005)
     # optimizer = torch.optim.Adam(params, lr=1e-7, weight_decay=0.0005)
 
     lr_scheduler = torch.optim.lr_scheduler.StepLR(optimizer, step_size=3, gamma=0.1)
@@ -100,7 +105,8 @@ def main():
 
     for epoch in range(num_epochs):
         train_one_epoch(model, optimizer, criterion, data_loader,
-                        device, epoch, print_freq=10)
+
+                        device, epoch, print_freq=100)
         lr_scheduler.step()
         if epoch % 5 == 0:
             # evaluate(ctpn_model, data_loader_test, device=device)

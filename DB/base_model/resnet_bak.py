@@ -1,12 +1,10 @@
-# -*- coding:utf-8 -*-
-# @author :adolf
 import torch.nn as nn
 import math
 import torch.utils.model_zoo as model_zoo
 
 BatchNorm2d = nn.BatchNorm2d
 
-__all__ = ['ResNet', 'resnet18', 'resnet34', 'resnet50', 'deformable_resnet18', 'deformable_resnet50', 'resnet101',
+__all__ = ['ResNet', 'resnet18', 'resnet34', 'resnet50', 'resnet101', 'deformable_resnet18', 'deformable_resnet50',
            'resnet152']
 
 model_urls = {
@@ -40,53 +38,48 @@ class BasicBlock(nn.Module):
         self.bn1 = BatchNorm2d(planes)
         self.relu = nn.ReLU(inplace=True)
         self.with_modulated_dcn = False
+
         if self.with_dcn:
             fallback_on_stride = dcn.get('fallback_on_stride', False)
-            self.with_modulated_dcn = dcn.get('modulated', False)
+            # self.with_modulated_dcn = dcn.get('modulated', False)
         # self.conv2 = conv3x3(planes, planes)
         if not self.with_dcn or fallback_on_stride:
             self.conv2 = nn.Conv2d(planes, planes, kernel_size=3,
                                    padding=1, bias=False)
         else:
             deformable_groups = dcn.get('deformable_groups', 1)
-            if not self.with_modulated_dcn:
-                from assets.ops.dcn import DeformConv
-                # from torchvision.ops import DeformConv2d as DeformConv
-                conv_op = DeformConv
-                offset_channels = 18
-            else:
-                from assets.ops.dcn import ModulatedDeformConv
-                conv_op = ModulatedDeformConv
-                offset_channels = 27
+            # if not self.with_modulated_dcn:
+            from torchvision.ops import DeformConv2d
+            # from assets.ops.dcn import DeformConv as DeformConv2d
+            conv_op = DeformConv2d
+            offset_channels = 18
             self.conv2_offset = nn.Conv2d(
                 planes,
                 deformable_groups * offset_channels,
                 kernel_size=3,
                 padding=1)
-            # use assets
             self.conv2 = conv_op(
                 planes,
                 planes,
                 kernel_size=3,
                 padding=1,
-                deformable_groups=deformable_groups,
+                groups=deformable_groups,
                 bias=False)
-            # use torchvision
-            # self.conv2 = conv_op(
-            #     planes,
-            #     planes,
-            #     kernel_size=3,
-            #     padding=1,
-            #     groups=deformable_groups,
-            #     bias=False)
-
+        # if not self.with_dcn:
+        #     self.conv2 = nn.Conv2d(planes, planes, kernel_size=3, padding=1, bias=False)
+        # else:
+        #     from torchvision.ops import DeformConv2d
+        #     deformable_groups = dcn.get('deformable_groups', 1)
+        #     offset_channels = 18
+        #     self.conv2_offset = nn.Conv2d(planes, deformable_groups * offset_channels, kernel_size=3, padding=1)
+        #     self.conv2 = DeformConv2d(planes, planes, kernel_size=3, padding=1, bias=False)
         self.bn2 = BatchNorm2d(planes)
         self.downsample = downsample
         self.stride = stride
 
     def forward(self, x):
         residual = x
-
+        # print('444', x.size())
         out = self.conv1(x)
         out = self.bn1(out)
         out = self.relu(out)
@@ -94,14 +87,12 @@ class BasicBlock(nn.Module):
         # out = self.conv2(out)
         if not self.with_dcn:
             out = self.conv2(out)
-        elif self.with_modulated_dcn:
-            offset_mask = self.conv2_offset(out)
-            offset = offset_mask[:, :18, :, :]
-            mask = offset_mask[:, -9:, :, :].sigmoid()
-            out = self.conv2(out, offset, mask)
         else:
+            print('111', out.size())
             offset = self.conv2_offset(out)
+            print('222', out.size())
             out = self.conv2(out, offset)
+        print('333')
         out = self.bn2(out)
 
         if self.downsample is not None:
@@ -120,42 +111,39 @@ class Bottleneck(nn.Module):
         super(Bottleneck, self).__init__()
         self.with_dcn = dcn is not None
         self.conv1 = nn.Conv2d(inplanes, planes, kernel_size=1, bias=False)
+        # self.conv1 = conv3x3(inplanes, planes, stride)
         self.bn1 = BatchNorm2d(planes)
-        fallback_on_stride = False
+        # self.with_modulated_dcn = False
+        # if not self.with_dcn:
+        #     self.conv2 = nn.Conv2d(planes, planes, kernel_size=3, stride=stride, padding=1, bias=False)
+        # else:
+        #     deformable_groups = dcn.get('deformable_groups', 1)
+        #     from torchvision.ops import DeformConv2d
+        #     offset_channels = 18
+        #     self.conv2_offset = nn.Conv2d(planes, deformable_groups * offset_channels, kernel_size=3, padding=1)
+        #     self.conv2 = DeformConv2d(planes, planes, kernel_size=3, padding=1, stride=stride, bias=False)
+        # fallback_on_stride = False
         self.with_modulated_dcn = False
         if self.with_dcn:
             fallback_on_stride = dcn.get('fallback_on_stride', False)
-            self.with_modulated_dcn = dcn.get('modulated', False)
+            # self.with_modulated_dcn = dcn.get('modulated', False)
         if not self.with_dcn or fallback_on_stride:
             self.conv2 = nn.Conv2d(planes, planes, kernel_size=3,
                                    stride=stride, padding=1, bias=False)
         else:
             deformable_groups = dcn.get('deformable_groups', 1)
-            if not self.with_modulated_dcn:
-                from assets.ops.dcn import DeformConv
-                # from torchvision.ops import DeformConv2d as DeformConv
-                conv_op = DeformConv
-                offset_channels = 18
-                # print('1111')
-            else:
-                # print('2222')
-                from assets.ops.dcn import ModulatedDeformConv
-                # from torchvision.ops import ModulatedDeformConv2d as ModulatedDeformConv
-                conv_op = ModulatedDeformConv
-                offset_channels = 27
+            # from torchvision.ops import DeformConv2d
+            from assets.ops.dcn import DeformConv as DeformConv2d
+            conv_op = DeformConv2d
+            offset_channels = 18
+            # print('222',planes)
             self.conv2_offset = nn.Conv2d(
                 planes, deformable_groups * offset_channels,
                 kernel_size=3,
                 padding=1)
-            # use assets
             self.conv2 = conv_op(
                 planes, planes, kernel_size=3, padding=1, stride=stride,
-                deformable_groups=deformable_groups, bias=False)
-            # use torchvision
-            # self.conv2 = conv_op(
-            #     planes, planes, kernel_size=3, padding=1, stride=stride,
-            #     groups=deformable_groups, bias=False)
-
+                groups=deformable_groups, bias=False)
         self.bn2 = BatchNorm2d(planes)
         self.conv3 = nn.Conv2d(planes, planes * 4, kernel_size=1, bias=False)
         self.bn3 = BatchNorm2d(planes * 4)
@@ -167,6 +155,7 @@ class Bottleneck(nn.Module):
 
     def forward(self, x):
         residual = x
+        # print(x.size())
 
         out = self.conv1(x)
         out = self.bn1(out)
@@ -174,14 +163,12 @@ class Bottleneck(nn.Module):
 
         # out = self.conv2(out)
         if not self.with_dcn:
+            # print('333', out.size())
             out = self.conv2(out)
-        elif self.with_modulated_dcn:
-            offset_mask = self.conv2_offset(out)
-            offset = offset_mask[:, :18, :, :]
-            mask = offset_mask[:, -9:, :, :].sigmoid()
-            out = self.conv2(out, offset, mask)
         else:
             offset = self.conv2_offset(out)
+            print('111', out.size())
+            print('222', offset.size())
             out = self.conv2(out, offset)
         out = self.bn2(out)
         out = self.relu(out)
@@ -199,10 +186,8 @@ class Bottleneck(nn.Module):
 
 
 class ResNet(nn.Module):
-    def __init__(self, block, layers, num_classes=1000,
-                 dcn=None, stage_with_dcn=(False, False, False, False)):
+    def __init__(self, block, layers, num_classes=1000, dcn=None):
         self.dcn = dcn
-        self.stage_with_dcn = stage_with_dcn
         self.inplanes = 64
         super(ResNet, self).__init__()
         self.conv1 = nn.Conv2d(3, 64, kernel_size=7, stride=2, padding=3,
@@ -211,12 +196,9 @@ class ResNet(nn.Module):
         self.relu = nn.ReLU(inplace=True)
         self.maxpool = nn.MaxPool2d(kernel_size=3, stride=2, padding=1)
         self.layer1 = self._make_layer(block, 64, layers[0])
-        self.layer2 = self._make_layer(
-            block, 128, layers[1], stride=2, dcn=dcn)
-        self.layer3 = self._make_layer(
-            block, 256, layers[2], stride=2, dcn=dcn)
-        self.layer4 = self._make_layer(
-            block, 512, layers[3], stride=2, dcn=dcn)
+        self.layer2 = self._make_layer(block, 128, layers[1], stride=2, dcn=dcn)
+        self.layer3 = self._make_layer(block, 256, layers[2], stride=2, dcn=dcn)
+        self.layer4 = self._make_layer(block, 512, layers[3], stride=2, dcn=dcn)
         self.avgpool = nn.AvgPool2d(7, stride=1)
         self.fc = nn.Linear(512 * block.expansion, num_classes)
 
@@ -245,8 +227,7 @@ class ResNet(nn.Module):
             )
 
         layers = []
-        layers.append(block(self.inplanes, planes,
-                            stride, downsample, dcn=dcn))
+        layers.append(block(self.inplanes, planes, stride, downsample, dcn=dcn))
         self.inplanes = planes * block.expansion
         for i in range(1, blocks):
             layers.append(block(self.inplanes, planes, dcn=dcn))
@@ -274,8 +255,8 @@ def resnet18(pretrained=True, **kwargs):
     """
     model = ResNet(BasicBlock, [2, 2, 2, 2], **kwargs)
     if pretrained:
-        model.load_state_dict(model_zoo.load_url(
-            model_urls['resnet18']), strict=False)
+        # print('load from imagenet')
+        model.load_state_dict(model_zoo.load_url(model_urls['resnet18']), strict=False)
     return model
 
 
@@ -288,10 +269,10 @@ def deformable_resnet18(pretrained=True, **kwargs):
                    dcn=dict(modulated=True,
                             deformable_groups=1,
                             fallback_on_stride=False),
-                   stage_with_dcn=[False, True, True, True], **kwargs)
+                   **kwargs)
     if pretrained:
-        model.load_state_dict(model_zoo.load_url(
-            model_urls['resnet18']), strict=False)
+        # print('load from imagenet')
+        model.load_state_dict(model_zoo.load_url(model_urls['resnet18']), strict=False)
     return model
 
 
@@ -302,8 +283,7 @@ def resnet34(pretrained=True, **kwargs):
     """
     model = ResNet(BasicBlock, [3, 4, 6, 3], **kwargs)
     if pretrained:
-        model.load_state_dict(model_zoo.load_url(
-            model_urls['resnet34']), strict=False)
+        model.load_state_dict(model_zoo.load_url(model_urls['resnet34']), strict=False)
     return model
 
 
@@ -314,8 +294,7 @@ def resnet50(pretrained=True, **kwargs):
     """
     model = ResNet(Bottleneck, [3, 4, 6, 3], **kwargs)
     if pretrained:
-        model.load_state_dict(model_zoo.load_url(
-            model_urls['resnet50']), strict=False)
+        model.load_state_dict(model_zoo.load_url(model_urls['resnet50']), strict=False)
     return model
 
 
@@ -328,11 +307,9 @@ def deformable_resnet50(pretrained=True, **kwargs):
                    dcn=dict(modulated=True,
                             deformable_groups=1,
                             fallback_on_stride=False),
-                   stage_with_dcn=[False, True, True, True],
                    **kwargs)
     if pretrained:
-        model.load_state_dict(model_zoo.load_url(
-            model_urls['resnet50']), strict=False)
+        model.load_state_dict(model_zoo.load_url(model_urls['resnet50']), strict=False)
     return model
 
 
@@ -343,8 +320,7 @@ def resnet101(pretrained=True, **kwargs):
     """
     model = ResNet(Bottleneck, [3, 4, 23, 3], **kwargs)
     if pretrained:
-        model.load_state_dict(model_zoo.load_url(
-            model_urls['resnet101']), strict=False)
+        model.load_state_dict(model_zoo.load_url(model_urls['resnet101']), strict=False)
     return model
 
 
@@ -355,6 +331,5 @@ def resnet152(pretrained=True, **kwargs):
     """
     model = ResNet(Bottleneck, [3, 8, 36, 3], **kwargs)
     if pretrained:
-        model.load_state_dict(model_zoo.load_url(
-            model_urls['resnet152']), strict=False)
+        model.load_state_dict(model_zoo.load_url(model_urls['resnet152']), strict=False)
     return model

@@ -143,6 +143,7 @@ class SegDetectorRepresenter(object):
         return expanded
 
     def get_mini_boxes(self, contour):
+        contour = np.array(contour, dtype=np.float32)
         bounding_box = cv2.minAreaRect(contour)
         points = sorted(list(cv2.boxPoints(bounding_box)), key=lambda x: x[0])
 
@@ -167,7 +168,7 @@ class SegDetectorRepresenter(object):
         h, w = bitmap.shape[:2]
         box = _box.copy()
 
-        # box = np.squeeze(box)
+        box = np.squeeze(box)
         xmin = np.clip(np.floor(box[:, 0].min()).astype(np.int), 0, w - 1)
         xmax = np.clip(np.ceil(box[:, 0].max()).astype(np.int), 0, w - 1)
         ymin = np.clip(np.floor(box[:, 1].min()).astype(np.int), 0, h - 1)

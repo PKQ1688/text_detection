@@ -1,6 +1,6 @@
 import os
 import shutil
-import TL_iou, rrc_evaluation_funcs
+from ocr_evaluation import TL_iou, rrc_evaluation_funcs
 import sys
 
 
@@ -18,23 +18,22 @@ def compute_hmean(submit_file_path):
     # if not os.path.isfile(log_file_path):
     #     os.mknod(log_file_path)
     #
-    dirname = "/home/shizai/adolf/ai+rpa/ocr/ocr_pra/maskrcnn/dataset/"
+    dirname = "/home/shizai/data2/ocr_data/icdar2015/test/"
     result_dir_path = os.path.join(dirname, 'result')
     try:
         shutil.rmtree(result_dir_path)
     except:
         pass
     os.mkdir(result_dir_path)
-    gt_file_path = "/home/shizai//datadisk4/SynthText/miao/gt.zip"
-    # submit_file_path = "/home/shizai/adolf/ai+rpa/ocr/ocr_use/PMTD/submit.zip"
-    submit_file_path = "/home/shizai/adolf/ai+rpa/ocr/ocr_use/keras-ctpn/submit.zip"
-    # submit_file_path = "/home/shizai/adolf/ai+rpa/ocr/ocr_pra/mytest/miao_submit.zip"
+    gt_file = "/home/shizai/data2/ocr_data/icdar2015/test/gt.zip"
 
-    resDict = rrc_evaluation_funcs.main_evaluation({'g': gt_file_path, 's': submit_file_path, 'o': result_dir_path},
+    submit_file = "/home/shizai/data2/ocr_data/icdar2015/test/submit.zip"
+
+    resDict = rrc_evaluation_funcs.main_evaluation({'g': gt_file, 's': submit_file, 'o': result_dir_path},
                                                    TL_iou.default_evaluation_params, TL_iou.validate_data,
                                                    TL_iou.evaluate_method)
 
-    # print(resDict)
+    print(resDict)
     recall = resDict['method']['recall']
 
     precision = resDict['method']['precision']
@@ -54,6 +53,6 @@ def compute_hmean(submit_file_path):
 
 
 if __name__ == '__main__':
-    # submit_file_path = '/home/shizai/adolf/ai+rpa/ocr/git_test/EAST/result/submit.zip'
-    submit_file_path = sys.argv[1]
+    submit_file_path = '/home/shizai/data2/ocr_data/icdar2015/test/submit.zip'
+    # submit_file_path = sys.argv[1]
     hmean = compute_hmean(submit_file_path)
