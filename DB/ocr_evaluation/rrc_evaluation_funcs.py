@@ -75,13 +75,17 @@ def load_zip_file(file, fileNameRegExp='', allEntries=False):
         addFile = True
         keyName = name
         if fileNameRegExp != "":
+            # print('fileNameRegExp', fileNameRegExp)
+            # print('name', name)
             m = re.match(fileNameRegExp, name)
+            # print('m',m)
             if m == None:
                 addFile = False
             else:
                 if len(m.groups()) > 0:
                     keyName = m.group(1)
 
+        # print('addFile', addFile)
         if addFile:
             pairs.append([keyName, archive.read(name)])
         else:

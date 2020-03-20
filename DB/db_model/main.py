@@ -17,8 +17,11 @@ from torchvision import transforms as T
 from db_model.loss import DBLoss
 
 import torch.nn as nn
+from predict.eval import *
 
-os.environ['CUDA_VISIBLE_DEVICES'] = "0,3,4,5"
+from post_processing.seg_detector_representer import SegDetectorRepresenter
+
+os.environ['CUDA_VISIBLE_DEVICES'] = "0,1,2,6"
 
 
 def get_transforms(transforms_config):
@@ -38,7 +41,9 @@ def main():
     device = torch.device("cuda") if torch.cuda.is_available() else torch.device("cpu")
 
     num_classes = 2
-    root_path = '/home/shizai/data2/ocr_data/icdar2015/train/'
+    # root_path = '/home/shizai/data2/ocr_data/icdar2015/train/'
+    root_path = '/home/shizai/data1/ocr_data/SynthText/'
+
     pre_processes = [{'type': 'IaaAugment', 'args': [{'type': 'Fliplr', 'args': {'p': 0.5}},
                                                      {'type': 'Affine', 'args': {'rotate': [-10, 10]}},
                                                      {'type': 'Resize', 'args': {'size': [0.5, 3]}}]},
@@ -53,17 +58,27 @@ def main():
 
     # print(transforms)
 
-    dataset = CurrentOcrData(root=root_path,
-                             pre_processes=pre_processes,
-                             transforms=transforms,
-                             filter_keys=filter_keys,
-                             ignore_tags=ignore_tags)
+    # dataset = CurrentOcrData(root=root_path,
+    #                          pre_processes=pre_processes,
+    #                          transforms=transforms,
+    #                          filter_keys=filter_keys,
+    #                          ignore_tags=ignore_tags,
+    #                          is_training=True)
+    #
+    # dataset_test = CurrentOcrData(root=root_path,
+    #                               pre_processes=pre_processes,
+    #                               transforms=transforms,
+    #                               filter_keys=filter_keys,
+    #                               ignore_tags=ignore_tags,
+    #                               is_training=False)
 
-    dataset_test = CurrentOcrData(root=root_path,
-                                  pre_processes=pre_processes,
-                                  transforms=transforms,
-                                  filter_keys=filter_keys,
-                                  ignore_tags=ignore_tags)
+    dataset = SynthTextData(root=root_path,
+                            gt_name='gt.mat',
+                            pre_processes=pre_processes,
+                            transforms=transforms,
+                            filter_keys=filter_keys,
+                            ignore_tags=ignore_tags,
+                            is_training=True)
 
     # indices = torch.randperm(len(dataset)).tolist()
     # dataset = torch.utils.data.Subset(dataset, indices[:-50])
@@ -74,8 +89,8 @@ def main():
                                               shuffle=True, num_workers=4)  # ,
     # collate_fn=collate_fn)
 
-    data_loader_test = torch.utils.data.DataLoader(dataset_test,
-                                                   batch_size=1, shuffle=False, num_workers=4)  # ,
+    # data_loader_test = torch.utils.data.DataLoader(dataset_test,
+    #                                                batch_size=1, shuffle=False, num_workers=4)  # ,
     # collate_fn=collate_fn)
 
     model_config = {
@@ -91,27 +106,49 @@ def main():
     # model.load_state_dict(torch.load('model_use/gen_20000.pth'))
     # print(model)
     params = [p for p in model.parameters() if p.requires_grad]
-    optimizer = torch.optim.SGD(params, lr=1e-3, momentum=0.9, weight_decay=0.0005)
+    optimizer = torch.optim.SGD(params, lr=1e-2, momentum=0.9, weight_decay=0.0005)
     # optimizer = torch.optim.Adam(params, lr=1e-7, weight_decay=0.0005)
 
-    lr_scheduler = torch.optim.lr_scheduler.StepLR(optimizer, step_size=3, gamma=0.1)
+    lr_scheduler = torch.optim.lr_scheduler.StepLR(optimizer, step_size=30, gamma=0.8)
 
     # def get_loss(config):
     #     return getattr(loss, config['type'])(**config['args'])
 
     criterion = DBLoss()
 
-    num_epochs = 21
+    params_config = dict()
+    params_config['thresh'] = 0.5
+    params_config['box_thresh'] = 0.5
+    params_config['max_candidates'] = 1000
+    params_config['unclip_ratio'] = 1.5
+    num_epochs = 1200
+    # post_process = SegDetectorRepresenter(thresh=params_config['thresh'],
+    #                                       box_thresh=params_config['box_thresh'],
+    #                                       max_candidates=params_config['max_candidates'],
+    #                                       unclip_ratio=params_config['unclip_ratio'])
 
     for epoch in range(num_epochs):
-        train_one_epoch(model, optimizer, criterion, data_loader,
-
-                        device, epoch, print_freq=100)
+        train_one_epoch(model, optimizer, criterion, data_loader, device, epoch, print_freq=500)
         lr_scheduler.step()
-        if epoch % 5 == 0:
-            # evaluate(ctpn_model, data_loader_test, device=device)
+
+        if epoch % 100 == 0:
             torch.save(model.state_dict(),
-                       'model_save/db_model_' + str(epoch) + '.pth')
+                       'model_save/db_synthtext_model_' + str(epoch) + '.pth')
+
+            # eval_config = {"model": model,
+            #                "model_path": 'model_save/final.pth',
+            #                "validate_loader": data_loader_test,
+            #                "post_process": post_process,
+            #                "metric_cls": QuadMetric()}
+            #
+            # eval_ = EVAL(**eval_config)
+            # recall, precision, fmeasure = eval_.eval()
+            # print("recall:", recall)
+            # print("precision:", precision)
+            # print("fmeasure:", fmeasure)
+
+        torch.save(model.state_dict(),
+                   'model_save/db_synthtext_model_final.pth')
 
     print("That's is all!")
 

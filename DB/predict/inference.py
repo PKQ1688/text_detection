@@ -94,7 +94,8 @@ class OnePredict(object):
                         box = np.array(box).reshape(-1).tolist()
                         result = ",".join([str(int(x)) for x in box])
                         score = scores[i]
-                        res.write(result + ',' + str(score) + "\n")
+                        # res.write(result + ',' + str(score) + "\n")
+                        res.write(result + "\n")
             else:
                 with open(result_file_path, 'wt') as res:
                     for i in range(boxes.shape[0]):
@@ -103,7 +104,8 @@ class OnePredict(object):
                             continue
                         box = boxes[i, :, :].reshape(-1).tolist()
                         result = ",".join([str(int(x)) for x in box])
-                        res.write(result + ',' + str(score) + "\n")
+                        # res.write(result + ',' + str(score) + "\n")
+                        res.write(result + "\n")
 
     @staticmethod
     def pre_process(img):
@@ -145,7 +147,7 @@ class OnePredict(object):
         batch['image'] = tensor
 
         with torch.no_grad():
-            # print(tensor)
+            # print('tensor', tensor.shape)
             preds = self.model(tensor)
             # print(preds)
 
@@ -183,15 +185,15 @@ if __name__ == '__main__':
         'segmentation_body': {'type': 'FPN', 'args': {'inner_channels': 256}},
         'segmentation_head': {'type': 'DBHead', 'args': {'out_channels': 2, 'k': 50}}
     }
-    params['thresh'] = 0.4
+    params['thresh'] = 0.5
     params['box_thresh'] = 0.5
     params['max_candidates'] = 1000
     params['unclip_ratio'] = 1.5
-    params['model_path'] = 'model_save/db_model_20.pth'
+    params['model_path'] = 'model_save/final.pth'
 
     img_predict = OnePredict(params)
     outputs = img_predict.inference(img_path='/home/shizai/data2/ocr_data/icdar2015/test/imgs/img_30.jpg')
-
+    print(outputs)
     img_eval_path = '/home/shizai/data2/ocr_data/icdar2015/test/imgs/'
     img_eval_res = '/home/shizai/data2/ocr_data/icdar2015/test/submit/'
     params['result_dir'] = img_eval_res

@@ -10,6 +10,8 @@ import torch
 from tqdm.auto import tqdm
 from detection_util.iou import DetectionIoUEvaluator
 
+import torch.nn as nn
+
 
 class AverageMeter(object):
     """Computes and stores the average and current value"""
@@ -35,7 +37,7 @@ class QuadMetric(object):
     def __init__(self):
         self.evaluator = DetectionIoUEvaluator()
 
-    def measure(self, batch, output, is_output_polygon=False, box_thresh=0.6):
+    def measure(self, batch, output, is_output_polygon=False, box_thresh=0.5):
         '''
         batch: (image, polygons, ignore_tags
         batch: a dict produced by dataloaders.
@@ -48,22 +50,41 @@ class QuadMetric(object):
         '''
         results = []
         gt_polyons_batch = batch['text_polys']
+        # gt_polyons_batch = np.array([gt_polyons_batch])
+        # print(gt_polyons_batch.shape)
         ignore_tags_batch = batch['ignore_tags']
+        # ignore_tags_batch = np.array([ignore_tags_batch])
+        # ignore_tags_batch = ignore_tags_batch.reshape(-1, 1)
+
+        # print('pred_scores_batch', output[1])
         pred_polygons_batch = np.array(output[0])
         pred_scores_batch = np.array(output[1])
-        for polygons, pred_polygons, pred_scores, ignore_tags in zip(gt_polyons_batch, pred_polygons_batch,
-                                                                     pred_scores_batch, ignore_tags_batch):
+        # print('111', pred_polygons_batch.shape)
+        # print('222', pred_scores_batch.shape)
+        # print('333', gt_polyons_batch.shape)
+        # print('444', ignore_tags_batch.shape)
+
+        for polygons, pred_polygons, pred_scores, ignore_tags \
+                in zip(gt_polyons_batch, pred_polygons_batch, pred_scores_batch, ignore_tags_batch):
+            # print('555', polygons.shape)
+            # print('333', pred_polygons.shape)
             gt = [dict(points=polygons[i], ignore=ignore_tags[i]) for i in range(len(polygons))]
             if is_output_polygon:
+                # print('123')
                 pred = [dict(points=pred_polygons[i]) for i in range(len(pred_polygons))]
             else:
+                # print('456')
                 pred = []
-                # print(pred_polygons.shape)
+                # print('0000', pred_polygons.shape)
                 for i in range(pred_polygons.shape[0]):
+                    # print('pred_scores', pred_scores.shape)
+                    # print(pred_scores[i])
                     if pred_scores[i] >= box_thresh:
                         # print(pred_polygons[i,:,:].tolist())
                         pred.append(dict(points=pred_polygons[i, :, :].tolist()))
-                # pred = [dict(points=pred_polygons[i,:,:].tolist()) if pred_scores[i] >= box_thresh for i in range(pred_polygons.shape[0])]
+            # print('=' * 50)
+            # print('gt', gt)
+            # print('pred', pred)
             results.append(self.evaluator.evaluate_image(gt, pred))
         return results
 
@@ -102,13 +123,15 @@ class EVAL(object):
         if gpu_id is not None:
             torch.backends.cudnn.benchmark = True
         checkpoint = torch.load(model_path, map_location=torch.device('cpu'))
-        config = checkpoint['config']
-        config['arch']['args']['pretrained'] = False
+        # print(checkpoint)
+        # config = checkpoint['config']
+        # config['arch']['args']['pretrained'] = False
 
         self.validate_loader = validate_loader
 
         self.model = model
-        self.model.load_state_dict(checkpoint['state_dict'])
+        # self.model = nn.DataParallel(self.model)
+        self.model.load_state_dict(checkpoint)
         self.model.to(self.device)
 
         self.post_process = post_process
@@ -120,17 +143,28 @@ class EVAL(object):
         raw_metrics = []
         total_frame = 0.0
         total_time = 0.0
-        for i, batch in tqdm(enumerate(self.validate_loader), total=len(self.validate_loader), desc='test model'):
+        for i, (img, batch) in tqdm(enumerate(self.validate_loader), total=len(self.validate_loader),
+                                    desc='test model'):
             with torch.no_grad():
                 # 数据进行转换和丢到gpu
+                h, w = batch['shape']
+                batch['shape'] = [(h, w)]
+                batch['image'] = img
+                batch['text_polys'] = np.array([batch['text_polys']])
+                batch['ignore_tags'] = np.array([batch['ignore_tags']])
+
                 for key, value in batch.items():
                     if value is not None:
                         if isinstance(value, torch.Tensor):
                             batch[key] = value.to(self.device)
                 start = time.time()
-                preds = self.model(batch['img'])
-                boxes, scores = self.post_process(batch, preds)
-                total_frame += batch['img'].size()[0]
+                # print('image', batch['image'].shape)
+                preds = self.model(batch['image'])
+                # print(preds)
+                boxes, scores = self.post_process.represent(batch, preds)
+                # boxes, scores = boxes[0], scores[0]
+                # print(scores)
+                total_frame += batch['image'].size()[0]
                 total_time += time.time() - start
                 raw_metric = self.metric_cls.validate_measure(batch, (boxes, scores))
                 raw_metrics.append(raw_metric)
