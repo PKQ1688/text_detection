@@ -4,7 +4,7 @@ import sys
 import torch
 import detection_util.transforms as T
 
-from detection_util.utils import collate_fn
+from detection_util.utils import icdar_collate_fn, collate_fn
 from detection_util.engine import train_one_epoch
 from db_model.data_define import *
 
@@ -81,13 +81,12 @@ def main():
                             is_training=True)
 
     # indices = torch.randperm(len(dataset)).tolist()
-    # dataset = torch.utils.data.Subset(dataset, indices[:-50])
+    # dataset = torch.utils.data.Subset(dataset, indices[:50])
     # dataset_test = torch.utils.data.Subset(dataset_test, indices[-50:])
 
     print('333333333', len(dataset))
     data_loader = torch.utils.data.DataLoader(dataset, batch_size=16,
-                                              shuffle=True, num_workers=4)  # ,
-    # collate_fn=collate_fn)
+                                              shuffle=True, num_workers=0)  # , collate_fn=icdar_collate_fn)
 
     # data_loader_test = torch.utils.data.DataLoader(dataset_test,
     #                                                batch_size=1, shuffle=False, num_workers=4)  # ,
@@ -109,7 +108,7 @@ def main():
     optimizer = torch.optim.SGD(params, lr=1e-2, momentum=0.9, weight_decay=0.0005)
     # optimizer = torch.optim.Adam(params, lr=1e-7, weight_decay=0.0005)
 
-    lr_scheduler = torch.optim.lr_scheduler.StepLR(optimizer, step_size=30, gamma=0.8)
+    lr_scheduler = torch.optim.lr_scheduler.StepLR(optimizer, step_size=10, gamma=0.1)
 
     # def get_loss(config):
     #     return getattr(loss, config['type'])(**config['args'])
@@ -121,17 +120,21 @@ def main():
     params_config['box_thresh'] = 0.5
     params_config['max_candidates'] = 1000
     params_config['unclip_ratio'] = 1.5
-    num_epochs = 1200
+    num_epochs = 50
     # post_process = SegDetectorRepresenter(thresh=params_config['thresh'],
     #                                       box_thresh=params_config['box_thresh'],
     #                                       max_candidates=params_config['max_candidates'],
     #                                       unclip_ratio=params_config['unclip_ratio'])
 
     for epoch in range(num_epochs):
-        train_one_epoch(model, optimizer, criterion, data_loader, device, epoch, print_freq=500)
-        lr_scheduler.step()
+        try:
+            train_one_epoch(model, optimizer, criterion, data_loader, device, epoch, print_freq=500)
+            lr_scheduler.step()
 
-        if epoch % 100 == 0:
+        except Exception as e:
+            print(e)
+
+        if epoch % 10 == 0:
             torch.save(model.state_dict(),
                        'model_save/db_synthtext_model_' + str(epoch) + '.pth')
 
@@ -147,8 +150,7 @@ def main():
             # print("precision:", precision)
             # print("fmeasure:", fmeasure)
 
-        torch.save(model.state_dict(),
-                   'model_save/db_synthtext_model_final.pth')
+    torch.save(model.state_dict(), 'model_save/db_synthtext_model_final.pth')
 
     print("That's is all!")
 
