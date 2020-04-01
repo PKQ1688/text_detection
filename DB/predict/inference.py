@@ -13,8 +13,6 @@ import numpy as np
 from torchvision import transforms as T
 import torch.nn as nn
 
-os.environ['CUDA_VISIBLE_DEVICES'] = "1"
-
 
 def get_transforms(transforms_config):
     tr_list = []
@@ -173,9 +171,12 @@ class OnePredict(object):
 
 
 if __name__ == '__main__':
+
+    os.environ['CUDA_VISIBLE_DEVICES'] = "3"
+
     params = dict()
     params['polygon'] = False
-    params['short_size'] = 736
+    params['short_size'] = 768
     params['result_dir'] = 'images_result/'
     params['transform'] = [{'type': 'ToTensor', 'args': {}},
                            {'type': 'Normalize', 'args': {'mean': [0.485, 0.456, 0.406], 'std': [0.229, 0.224, 0.225]}}]
@@ -186,14 +187,14 @@ if __name__ == '__main__':
         'segmentation_head': {'type': 'DBHead', 'args': {'out_channels': 2, 'k': 50}}
     }
     params['thresh'] = 0.5
-    params['box_thresh'] = 0.5
+    params['box_thresh'] = 0.7
     params['max_candidates'] = 1000
     params['unclip_ratio'] = 1.5
-    params['model_path'] = 'model_save/final.pth'
+    params['model_path'] = 'model_save/db_synthtext_model_final.pth'
 
     img_predict = OnePredict(params)
-    outputs = img_predict.inference(img_path='/home/shizai/data2/ocr_data/icdar2015/test/imgs/img_30.jpg')
-    print(outputs)
+    # outputs = img_predict.inference(img_path='/home/shizai/data2/ocr_data/icdar2015/test/imgs/img_30.jpg')
+    # print(outputs)
     img_eval_path = '/home/shizai/data2/ocr_data/icdar2015/test/imgs/'
     img_eval_res = '/home/shizai/data2/ocr_data/icdar2015/test/submit/'
     params['result_dir'] = img_eval_res

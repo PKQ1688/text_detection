@@ -21,7 +21,11 @@ from predict.eval import *
 
 from post_processing.seg_detector_representer import SegDetectorRepresenter
 
+from apex import amp
+
 os.environ['CUDA_VISIBLE_DEVICES'] = "0,1,2,6"
+use_amp = True
+import apex
 
 
 def get_transforms(transforms_config):
@@ -41,8 +45,10 @@ def main():
     device = torch.device("cuda") if torch.cuda.is_available() else torch.device("cpu")
 
     num_classes = 2
-    # root_path = '/home/shizai/data2/ocr_data/icdar2015/train/'
-    root_path = '/home/shizai/data1/ocr_data/SynthText/'
+    root_path = '/home/shizai/data2/ocr_data/icdar2015/train/'
+    # root_path = '/home/shizai/data1/ocr_data/SynthText/'
+
+    # root_path = "/home/shizai/data2/ocr_data/third_data/"
 
     pre_processes = [{'type': 'IaaAugment', 'args': [{'type': 'Fliplr', 'args': {'p': 0.5}},
                                                      {'type': 'Affine', 'args': {'rotate': [-10, 10]}},
@@ -58,12 +64,12 @@ def main():
 
     # print(transforms)
 
-    # dataset = CurrentOcrData(root=root_path,
-    #                          pre_processes=pre_processes,
-    #                          transforms=transforms,
-    #                          filter_keys=filter_keys,
-    #                          ignore_tags=ignore_tags,
-    #                          is_training=True)
+    dataset = CurrentOcrData(root=root_path,
+                             pre_processes=pre_processes,
+                             transforms=transforms,
+                             filter_keys=filter_keys,
+                             ignore_tags=ignore_tags,
+                             is_training=True)
     #
     # dataset_test = CurrentOcrData(root=root_path,
     #                               pre_processes=pre_processes,
@@ -72,13 +78,13 @@ def main():
     #                               ignore_tags=ignore_tags,
     #                               is_training=False)
 
-    dataset = SynthTextData(root=root_path,
-                            gt_name='gt.mat',
-                            pre_processes=pre_processes,
-                            transforms=transforms,
-                            filter_keys=filter_keys,
-                            ignore_tags=ignore_tags,
-                            is_training=True)
+    # dataset = SynthTextData(root=root_path,
+    #                         gt_name='gt.mat',
+    #                         pre_processes=pre_processes,
+    #                         transforms=transforms,
+    #                         filter_keys=filter_keys,
+    #                         ignore_tags=ignore_tags,
+    #                         is_training=True)
 
     # indices = torch.randperm(len(dataset)).tolist()
     # dataset = torch.utils.data.Subset(dataset, indices[:50])
@@ -108,33 +114,42 @@ def main():
     optimizer = torch.optim.SGD(params, lr=1e-2, momentum=0.9, weight_decay=0.0005)
     # optimizer = torch.optim.Adam(params, lr=1e-7, weight_decay=0.0005)
 
-    lr_scheduler = torch.optim.lr_scheduler.StepLR(optimizer, step_size=10, gamma=0.1)
+    lr_scheduler = torch.optim.lr_scheduler.StepLR(optimizer, step_size=15, gamma=0.9)
 
     # def get_loss(config):
     #     return getattr(loss, config['type'])(**config['args'])
 
     criterion = DBLoss()
+    if use_amp:
+        model, optimizer = amp.initialize(model, optimizer, opt_level="O1")
 
     params_config = dict()
     params_config['thresh'] = 0.5
     params_config['box_thresh'] = 0.5
     params_config['max_candidates'] = 1000
     params_config['unclip_ratio'] = 1.5
-    num_epochs = 50
+    num_epochs = 1200
     # post_process = SegDetectorRepresenter(thresh=params_config['thresh'],
     #                                       box_thresh=params_config['box_thresh'],
     #                                       max_candidates=params_config['max_candidates'],
     #                                       unclip_ratio=params_config['unclip_ratio'])
-
+    min_loss = 9999
     for epoch in range(num_epochs):
         try:
-            train_one_epoch(model, optimizer, criterion, data_loader, device, epoch, print_freq=500)
+            losses = train_one_epoch(model, optimizer, criterion, data_loader, device, epoch, print_freq=500,
+                                     use_amp=use_amp)
             lr_scheduler.step()
+            print(losses)
+            print(type(losses))
+            if epoch > num_epochs / 2 and losses < min_loss:
+                torch.save(model.state_dict(),
+                           'model_save/db_loss_model_' + str(epoch) + '.pth')
+                min_loss = losses
 
         except Exception as e:
             print(e)
 
-        if epoch % 10 == 0:
+        if epoch % 100 == 0:
             torch.save(model.state_dict(),
                        'model_save/db_synthtext_model_' + str(epoch) + '.pth')
 

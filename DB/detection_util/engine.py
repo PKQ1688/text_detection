@@ -4,11 +4,11 @@ import math
 import sys
 import time
 import torch
-
+from apex import amp
 import detection_util.utils as utils
 
 
-def train_one_epoch(model, optimizer, criterion, data_loader, device, epoch, print_freq):
+def train_one_epoch(model, optimizer, criterion, data_loader, device, epoch, print_freq, use_amp):
     model.train()
     metric_logger = utils.MetricLogger(delimiter=" ")
     metric_logger.add_meter('lr', utils.SmoothedValue(window_size=1, fmt='{value:.6f}'))
@@ -71,7 +71,11 @@ def train_one_epoch(model, optimizer, criterion, data_loader, device, epoch, pri
         # sys.exit(1)
 
         optimizer.zero_grad()
-        losses.backward()
+        if use_amp:
+            with amp.scale_loss(losses, optimizer) as scaled_loss:
+                scaled_loss.backward()
+        else:
+            losses.backward()
         optimizer.step()
 
         if lr_scheduler is not None:
@@ -94,3 +98,4 @@ def train_one_epoch(model, optimizer, criterion, data_loader, device, epoch, pri
         # train_loss += loss_dict['loss']
 
         # print(epoch, train_loss)
+        return losses
