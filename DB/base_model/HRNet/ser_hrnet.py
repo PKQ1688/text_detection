@@ -10,7 +10,9 @@ import torch
 import torch.nn as nn
 import torch._utils
 import torch.nn.functional as F
-from base_model.HRNet.config import HIGH_RESOLUTION_NET as config
+# from base_model.HRNet.default import _C as config
+# from base_model.HRNet.default import update_config
+import yaml
 
 BatchNorm2d = nn.BatchNorm2d
 BN_MOMENTUM = 0.01
@@ -252,7 +254,8 @@ blocks_dict = {
 class HighResolutionNet(nn.Module):
 
     def __init__(self, config, **kwargs):
-        extra = config.MODEL.EXTRA
+        extra = config['MODEL']['EXTRA']
+        # extra = config['seg_hrnet']
         super(HighResolutionNet, self).__init__()
 
         # stem net
@@ -314,10 +317,10 @@ class HighResolutionNet(nn.Module):
             nn.ReLU(inplace=True),
             nn.Conv2d(
                 in_channels=last_inp_channels,
-                out_channels=config.DATASET.NUM_CLASSES,
-                kernel_size=extra.FINAL_CONV_KERNEL,
+                out_channels=config['DATASET']['NUM_CLASSES'],
+                kernel_size=extra['FINAL_CONV_KERNEL'],
                 stride=1,
-                padding=1 if extra.FINAL_CONV_KERNEL == 3 else 0)
+                padding=1 if extra['FINAL_CONV_KERNEL'] == 3 else 0)
         )
 
     def _make_transition_layer(
@@ -470,12 +473,14 @@ class HighResolutionNet(nn.Module):
 
 def get_seg_model(cfg, **kwargs):
     model = HighResolutionNet(cfg, **kwargs)
-    model.init_weights(cfg.MODEL.PRETRAINED)
+    model.init_weights(cfg['MODEL']['PRETRAINED'])
 
     return model
 
 
 if __name__ == '__main__':
-    model = get_seg_model(config)
+    with open('base_model/HRNet/seg_test.yaml', 'r') as f:
+        config = yaml.load(f, Loader=yaml.FullLoader)
     print(config)
+    model = get_seg_model(config)
     print(model)
