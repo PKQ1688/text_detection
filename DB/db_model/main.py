@@ -23,9 +23,12 @@ from post_processing.seg_detector_representer import SegDetectorRepresenter
 
 from apex import amp
 
-os.environ['CUDA_VISIBLE_DEVICES'] = "0,1,2,6"
-use_amp = True
-import apex
+os.environ['CUDA_VISIBLE_DEVICES'] = "1,2,4,6"
+use_amp = False
+BATCH_SIZE = 16
+
+
+# import apex
 
 
 def get_transforms(transforms_config):
@@ -91,7 +94,7 @@ def main():
     # dataset_test = torch.utils.data.Subset(dataset_test, indices[-50:])
 
     print('333333333', len(dataset))
-    data_loader = torch.utils.data.DataLoader(dataset, batch_size=16,
+    data_loader = torch.utils.data.DataLoader(dataset, batch_size=BATCH_SIZE,
                                               shuffle=True, num_workers=0)  # , collate_fn=icdar_collate_fn)
 
     # data_loader_test = torch.utils.data.DataLoader(dataset_test,
@@ -99,20 +102,26 @@ def main():
     # collate_fn=collate_fn)
 
     model_config = {
-        'backbone': 'deformable_resnet50',
+        'backbone': 'resnet50',
         'pretrained': True,
         'segmentation_body': {'type': 'FPN', 'args': {'inner_channels': 256}},
         'segmentation_head': {'type': 'DBHead', 'args': {'out_channels': 2, 'k': 50}}
     }
     model = DBModel(model_config=model_config)
-    model = nn.DataParallel(model)
+
+    model = model.float()
     model.to(device)
+    params = [p for p in model.parameters() if p.requires_grad]
+
+    optimizer = torch.optim.SGD(params, lr=1e-2, momentum=0.9, weight_decay=0.0005)
+
+    # optimizer = torch.optim.Adam(params, lr=1e-7, weight_decay=0.0005)
+    if use_amp:
+        model, optimizer = amp.initialize(model, optimizer, opt_level="O1")
+    model = nn.DataParallel(model)
 
     # model.load_state_dict(torch.load('model_use/gen_20000.pth'))
     # print(model)
-    params = [p for p in model.parameters() if p.requires_grad]
-    optimizer = torch.optim.SGD(params, lr=1e-2, momentum=0.9, weight_decay=0.0005)
-    # optimizer = torch.optim.Adam(params, lr=1e-7, weight_decay=0.0005)
 
     lr_scheduler = torch.optim.lr_scheduler.StepLR(optimizer, step_size=15, gamma=0.9)
 
@@ -120,8 +129,6 @@ def main():
     #     return getattr(loss, config['type'])(**config['args'])
 
     criterion = DBLoss()
-    if use_amp:
-        model, optimizer = amp.initialize(model, optimizer, opt_level="O1")
 
     params_config = dict()
     params_config['thresh'] = 0.5
@@ -136,22 +143,22 @@ def main():
     min_loss = 9999
     for epoch in range(num_epochs):
         try:
-            losses = train_one_epoch(model, optimizer, criterion, data_loader, device, epoch, print_freq=500,
+            # print(epoch)
+            losses = train_one_epoch(model, optimizer, criterion, data_loader, device, epoch, print_freq=50,
                                      use_amp=use_amp)
             lr_scheduler.step()
-            print(losses)
-            print(type(losses))
             if epoch > num_epochs / 2 and losses < min_loss:
                 torch.save(model.state_dict(),
                            'model_save/db_loss_model_' + str(epoch) + '.pth')
                 min_loss = losses
 
         except Exception as e:
+            print('111')
             print(e)
 
         if epoch % 100 == 0:
             torch.save(model.state_dict(),
-                       'model_save/db_synthtext_model_' + str(epoch) + '.pth')
+                       'model_save/db_icdar_model_' + str(epoch) + '.pth')
 
             # eval_config = {"model": model,
             #                "model_path": 'model_save/final.pth',
@@ -165,7 +172,7 @@ def main():
             # print("precision:", precision)
             # print("fmeasure:", fmeasure)
 
-    torch.save(model.state_dict(), 'model_save/db_synthtext_model_final.pth')
+    torch.save(model.state_dict(), 'model_save/db_icdar_model_final.pth')
 
     print("That's is all!")
 

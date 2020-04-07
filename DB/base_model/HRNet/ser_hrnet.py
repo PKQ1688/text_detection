@@ -10,6 +10,7 @@ import torch
 import torch.nn as nn
 import torch._utils
 import torch.nn.functional as F
+from base_model.HRNet.config import HIGH_RESOLUTION_NET as config
 
 BatchNorm2d = nn.BatchNorm2d
 BN_MOMENTUM = 0.01
@@ -472,3 +473,9 @@ def get_seg_model(cfg, **kwargs):
     model.init_weights(cfg.MODEL.PRETRAINED)
 
     return model
+
+
+if __name__ == '__main__':
+    model = get_seg_model(config)
+    print(config)
+    print(model)

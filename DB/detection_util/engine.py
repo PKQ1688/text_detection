@@ -33,6 +33,7 @@ def train_one_epoch(model, optimizer, criterion, data_loader, device, epoch, pri
         # print(targets)
         # print(len(targets))
         # sys.exit(1)
+        images = images.float()
         images = images.to(device)
         for key, value in targets.items():
             if value is not None:
@@ -71,10 +72,12 @@ def train_one_epoch(model, optimizer, criterion, data_loader, device, epoch, pri
         # sys.exit(1)
 
         optimizer.zero_grad()
+        # print('2222')
         if use_amp:
             with amp.scale_loss(losses, optimizer) as scaled_loss:
                 scaled_loss.backward()
         else:
+            # print('1111')
             losses.backward()
         optimizer.step()
 
@@ -98,4 +101,5 @@ def train_one_epoch(model, optimizer, criterion, data_loader, device, epoch, pri
         # train_loss += loss_dict['loss']
 
         # print(epoch, train_loss)
-        return losses
+
+    return losses

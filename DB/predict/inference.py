@@ -181,16 +181,16 @@ if __name__ == '__main__':
     params['transform'] = [{'type': 'ToTensor', 'args': {}},
                            {'type': 'Normalize', 'args': {'mean': [0.485, 0.456, 0.406], 'std': [0.229, 0.224, 0.225]}}]
     params['model_config'] = {
-        'backbone': 'deformable_resnet50',
+        'backbone': 'resnet50',
         'pretrained': True,
         'segmentation_body': {'type': 'FPN', 'args': {'inner_channels': 256}},
         'segmentation_head': {'type': 'DBHead', 'args': {'out_channels': 2, 'k': 50}}
     }
     params['thresh'] = 0.5
-    params['box_thresh'] = 0.7
+    params['box_thresh'] = 0.6
     params['max_candidates'] = 1000
     params['unclip_ratio'] = 1.5
-    params['model_path'] = 'model_save/db_synthtext_model_final.pth'
+    params['model_path'] = 'model_save/db_loss_model_1080.pth'
 
     img_predict = OnePredict(params)
     # outputs = img_predict.inference(img_path='/home/shizai/data2/ocr_data/icdar2015/test/imgs/img_30.jpg')
