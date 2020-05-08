@@ -139,7 +139,7 @@ def main():
     params_config['box_thresh'] = 0.5
     params_config['max_candidates'] = 1000
     params_config['unclip_ratio'] = 1.5
-    num_epochs = 1200
+    num_epochs = 100
     # post_process = SegDetectorRepresenter(thresh=params_config['thresh'],
     #                                       box_thresh=params_config['box_thresh'],
     #                                       max_candidates=params_config['max_candidates'],
