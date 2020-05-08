@@ -84,10 +84,18 @@ def load_zip_file(file, fileNameRegExp='', allEntries=False):
             else:
                 if len(m.groups()) > 0:
                     keyName = m.group(1)
+                    # print(m.group(1))
 
         # print('addFile', addFile)
         if addFile:
-            pairs.append([keyName, archive.read(name)])
+            gt_str = archive.read(name)  # .replace('\xef\xbb\xbf', '')
+            gt_str = str(gt_str, encoding='utf-8')
+            gt_str = gt_str.replace('\ufeff', '').replace(' ', '')
+            # print(gt_str)
+            gt_str = bytes(gt_str, encoding='utf-8')
+            pairs.append([keyName, gt_str])
+            # print(pairs)
+            # sys.exit(1)
         else:
             if allEntries:
                 raise Exception('ZIP entry not valid: %s' % name)
@@ -115,6 +123,11 @@ def validate_lines_in_file(fileName, file_contents, CRLF=True, LTRB=True, withTr
     """
     This function validates that all lines of the file calling the Line validation function for each line
     """
+
+    # file_contents = file_contents.replace('\xef\xbb\xbf', '')
+    # print('33333')
+    # print(file_contents)
+
     utf8File = decode_utf8(file_contents)
     if (utf8File is None):
         raise Exception("The file %s is not UTF-8" % fileName)
@@ -304,7 +317,7 @@ def get_tl_line_values_from_file_contents(content, CRLF=True, LTRB=True, withTra
         line = line.replace("\r", "").replace("\n", "")
         if (line != ""):
             points, confidence, transcription = get_tl_line_values(line, LTRB, withTranscription, withConfidence,
-                                                                   imWidth, imHeight);
+                                                                   imWidth, imHeight)
             pointsList.append(points)
             transcriptionsList.append(transcription)
             confidencesList.append(confidence)

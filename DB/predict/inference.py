@@ -13,6 +13,8 @@ import numpy as np
 from torchvision import transforms as T
 import torch.nn as nn
 
+from db_model.hrnet_model import HRNetDBModel
+
 
 def get_transforms(transforms_config):
     tr_list = []
@@ -45,7 +47,10 @@ def demo_visualize(image_path, output):
 class OnePredict(object):
     def __init__(self, params):
         self.params = params
-        self.model = DBModel(params['model_config'])
+        # self.model = DBModel(params['model_config'])
+        db_args = {'out_channels': 2,
+                   'k': 50}
+        self.model = HRNetDBModel(db_args)
         self.post_processing = SegDetectorRepresenter(thresh=params['thresh'],
                                                       box_thresh=params['box_thresh'],
                                                       max_candidates=params['max_candidates'],
@@ -153,13 +158,13 @@ class OnePredict(object):
 
             # print('output', outputs)
 
-        is_format_output = True
+        # is_format_output = True
         if is_format_output is True:
             if not os.path.isdir(self.params['result_dir']):
                 os.mkdir(self.params['result_dir'])
             self.format_output(batch, outputs)
 
-        is_visualize = False
+        # is_visualize = False
         if is_visualize:
             vis_img = self.demo_visualize(img_path, outputs)
             if not os.path.isdir(self.params['result_dir']):
@@ -171,12 +176,11 @@ class OnePredict(object):
 
 
 if __name__ == '__main__':
-
-    os.environ['CUDA_VISIBLE_DEVICES'] = "3"
+    os.environ['CUDA_VISIBLE_DEVICES'] = "2"
 
     params = dict()
     params['polygon'] = False
-    params['short_size'] = 768
+    params['short_size'] = 1152
     params['result_dir'] = 'images_result/'
     params['transform'] = [{'type': 'ToTensor', 'args': {}},
                            {'type': 'Normalize', 'args': {'mean': [0.485, 0.456, 0.406], 'std': [0.229, 0.224, 0.225]}}]
@@ -186,14 +190,19 @@ if __name__ == '__main__':
         'segmentation_body': {'type': 'FPN', 'args': {'inner_channels': 256}},
         'segmentation_head': {'type': 'DBHead', 'args': {'out_channels': 2, 'k': 50}}
     }
-    params['thresh'] = 0.5
-    params['box_thresh'] = 0.6
+    params['thresh'] = 0.2
+    params['box_thresh'] = 0.55
     params['max_candidates'] = 1000
-    params['unclip_ratio'] = 1.5
-    params['model_path'] = 'model_save/db_loss_model_1080.pth'
 
+    params['unclip_ratio'] = 1.5
+    params['model_path'] = 'model_save/db_icdar_model_1100.pth'
+
+    img_demo_path = "images_result/"
     img_predict = OnePredict(params)
-    # outputs = img_predict.inference(img_path='/home/shizai/data2/ocr_data/icdar2015/test/imgs/img_30.jpg')
+    # params['result_dir'] = img_demo_path
+    # outputs = img_predict.inference(
+    #     img_path='/home/shizai/data2/ocr_data/icdar2015/test/imgs/img_500.jpg',
+    #     is_visualize=True, is_format_output=False)
     # print(outputs)
     img_eval_path = '/home/shizai/data2/ocr_data/icdar2015/test/imgs/'
     img_eval_res = '/home/shizai/data2/ocr_data/icdar2015/test/submit/'
@@ -202,5 +211,9 @@ if __name__ == '__main__':
     i = 0
     for img_name in os.listdir(img_eval_path):
         print(i)
-        outputs = img_predict.inference(img_path=os.path.join(img_eval_path, img_name))
+        s1 = time.time()
+        outputs = img_predict.inference(
+            img_path=os.path.join(img_eval_path, img_name),
+            is_visualize=False, is_format_output=True)
+        # print('cost time:', time.time() - s1)
         i += 1

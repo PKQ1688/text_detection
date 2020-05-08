@@ -20,12 +20,13 @@ import torch.nn as nn
 from predict.eval import *
 
 from post_processing.seg_detector_representer import SegDetectorRepresenter
+from db_model.hrnet_model import HRNetDBModel
 
-from apex import amp
+# from apex import amp
 
-os.environ['CUDA_VISIBLE_DEVICES'] = "1,2,4,6"
+os.environ['CUDA_VISIBLE_DEVICES'] = "1,4"
 use_amp = False
-BATCH_SIZE = 16
+BATCH_SIZE = 4
 
 
 # import apex
@@ -108,16 +109,19 @@ def main():
         'segmentation_head': {'type': 'DBHead', 'args': {'out_channels': 2, 'k': 50}}
     }
     model = DBModel(model_config=model_config)
+    # db_args = {'out_channels': 2,
+    #            'k': 50}
+    # model = HRNetDBModel(db_args)
 
     model = model.float()
     model.to(device)
     params = [p for p in model.parameters() if p.requires_grad]
 
-    optimizer = torch.optim.SGD(params, lr=1e-2, momentum=0.9, weight_decay=0.0005)
+    optimizer = torch.optim.SGD(params, lr=1e-3, momentum=0.9, weight_decay=0.0005)
 
     # optimizer = torch.optim.Adam(params, lr=1e-7, weight_decay=0.0005)
-    if use_amp:
-        model, optimizer = amp.initialize(model, optimizer, opt_level="O1")
+    # if use_amp:
+        # model, optimizer = amp.initialize(model, optimizer, opt_level="O1")
     model = nn.DataParallel(model)
 
     # model.load_state_dict(torch.load('model_use/gen_20000.pth'))

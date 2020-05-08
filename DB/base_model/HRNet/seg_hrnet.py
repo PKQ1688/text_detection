@@ -446,7 +446,7 @@ class HighResolutionNet(nn.Module):
 
         x = torch.cat([x[0], x1, x2, x3], 1)
 
-        x = self.last_layer(x)
+        # x = self.last_layer(x)
 
         return x
 
@@ -481,6 +481,9 @@ def get_seg_model(cfg, **kwargs):
 if __name__ == '__main__':
     with open('base_model/HRNet/seg_test.yaml', 'r') as f:
         config = yaml.load(f, Loader=yaml.FullLoader)
-    print(config)
+    # print(config)
     model = get_seg_model(config)
     print(model)
+    x = torch.zeros(1, 3, 640, 640)
+    y = model(x)
+    print('2222',y.size())

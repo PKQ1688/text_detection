@@ -45,6 +45,7 @@ def validate_data(gtFilePath, submFilePath, evaluationParams):
                             If some error detected, the method raises the error
     """
     gt = rrc_evaluation_funcs.load_zip_file(gtFilePath, evaluationParams['GT_SAMPLE_NAME_2_ID'])
+    # print(gt)
 
     subm = rrc_evaluation_funcs.load_zip_file(submFilePath, evaluationParams['DET_SAMPLE_NAME_2_ID'], True)
 

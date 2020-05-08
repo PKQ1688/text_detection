@@ -53,6 +53,7 @@ class DBModel(nn.Module):
         _, _, H, W = x.size()
         backbone_out = self.backbone(x)
         segmentation_body_out = self.segmentation_body(backbone_out)
+        print(111, segmentation_body_out.size())
         y = self.segmentation_head(segmentation_body_out)
         y = F.interpolate(y, size=(H, W), mode='bilinear', align_corners=True)
         return y

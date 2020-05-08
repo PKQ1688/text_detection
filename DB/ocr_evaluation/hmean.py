@@ -49,10 +49,10 @@ def compute_hmean(submit_file_path):
     #         'text_location <==> Evaluation <==> Precision:{:.2f} Recall:{:.2f} Hmean{:.2f} <==> Done\n'.format(precision, recall,
     #                                                                                                   hmean))
 
-    return hmean
+    return recall, precision, hmean
 
 
 if __name__ == '__main__':
     submit_file_path = '/home/shizai/data2/ocr_data/icdar2015/test/submit.zip'
     # submit_file_path = sys.argv[1]
-    hmean = compute_hmean(submit_file_path)
+    recall, precision, hmean = compute_hmean(submit_file_path)
