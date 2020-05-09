@@ -4,9 +4,9 @@ import torch.nn.functional as F
 import torch.nn as nn
 import torch
 
-from backbone.resnet import *
-from backbone.segmentation_basic import FPN, FPEM_FFM
-from backbone.segmentation_head import ConvHead, DBHead
+from base_model.resnet import *
+from base_model.segmentation_basic import FPN, FPEM_FFM
+from base_model.segmentation_head import ConvHead, DBHead
 
 backbone_dict = {
     'resnet18': {'models': resnet18, 'out': [64, 128, 256, 512]},

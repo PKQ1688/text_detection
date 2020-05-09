@@ -17,12 +17,15 @@ class DBModel(nn.Module):
         super().__init__()
         self.backbone = backbone
         self.out_channels = self.backbone.out_channels
-        self.segmentation_head = DBHead(in_channels=256)
+        self.segmentation_head = DBHead(in_channels=self.out_channels)
+        print('3333', self.out_channels)
 
     def forward(self, x):
         # print(model_config['segmentation_body']['args'])
         _, _, H, W = x.size()
         backbone_out = self.backbone(x)
+        print(backbone_out.keys())
+        backbone_out = backbone_out['0']
         print(111, backbone_out.size())
         y = self.segmentation_head(backbone_out)
         y = F.interpolate(y, size=(H, W), mode='bilinear', align_corners=True)
@@ -30,7 +33,7 @@ class DBModel(nn.Module):
 
 
 def dbnet_resnet50_fpn(pretrained=False):
-    backbone = resnet_fpn_backbone('resnet', pretrained)
+    backbone = resnet_fpn_backbone('resnet50', pretrained)
     db_model = DBModel(backbone)
     return db_model
 
@@ -51,5 +54,5 @@ if __name__ == '__main__':
     y = model(x)
     print(time.time() - tic)
     print(y.shape)
-    print(model)
+    # print(model)
     # torch.save(model.state_dict(), 'PAN.pth')
