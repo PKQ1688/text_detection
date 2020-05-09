@@ -34,11 +34,11 @@ model_define:
 pretrained:
   pretrained_backbone: False
   pretrained_model: False
-trian_params:
+train_params:
   batch_size: 32
   epochs: 100
   lr: 1.0e-4
-  works: 16
+  workers: 16
   DateParallel: True
 inference_params:
   thresh: 0.5

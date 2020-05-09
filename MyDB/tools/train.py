@@ -1,10 +1,22 @@
 # -*- coding:utf-8 -*-
 # @author :adolf
+import os
 import torch
-from data.dataset import CurrentDateset
+from data.dataset import CurrentOcrData
 from torchvision import transforms as T
 
-import torch.utils.data as data
+from torch.utils.data import DataLoader
+import torch.optim as optim
+
+from model.dbmodel import dbnet_resnet50_fpn
+from model.loss import DBLoss
+import torch.nn as nn
+
+from utils import lr_scheduler
+
+from tqdm import tqdm
+
+import numpy as np
 
 
 class Train(object):
@@ -18,6 +30,46 @@ class Train(object):
         self.transforms = self.get_transforms(transforms_config)
         self.filter_keys = configs['data']['filter_keys']
         self.ignore_tags = configs['data']['ignore_tags']
+
+        self.batch_size = configs['train_params']['batch_size']
+        self.epochs = configs['train_params']['epochs']
+        self.lr = configs['train_params']['lr']
+        self.workers = configs['train_params']['workers']
+        is_multi_gpu = configs['train_params']['DateParallel']
+
+        self.weights = configs['root_path']['weight']
+        if not os.path.exists(self.weights):
+            os.mkdir(self.weights)
+
+        pre_train = configs['pretrained']['pretrained_model']
+        pre_train_backbone = configs['pretrained']['pretrained_backbone']
+
+        model_path = configs['root_path']['pretrained_model']
+
+        self.model = dbnet_resnet50_fpn(pre_train_backbone)
+        if pre_train:
+            self.model.load_state_dict(torch.load(model_path, map_location=self.device), strict=False)
+
+        if is_multi_gpu:
+            self.model = nn.DataParallel(self.model)
+
+        self.model.to(self.device)
+
+        self.best_validation_dsc = 0.0
+
+        self.loader_train, self.loader_valid = self.data_loaders()
+
+        self.params = [p for p in self.model.parameters() if p.requires_grad]
+
+        self.optimizer = optim.Adam(self.params, lr=self.lr, weight_decay=0.0005)
+        # self.optimizer = torch.optim.SGD(self.params, lr=self.lr, momentum=0.9, weight_decay=0.0005)
+
+        self.scheduler = lr_scheduler.LR_Scheduler_Head('poly', self.lr,
+                                                        self.epochs, len(self.loader_train))
+
+        self.criterion = DBLoss()
+
+        self.step = 0
 
     @staticmethod
     def get_transforms(transforms_config):
@@ -33,18 +85,102 @@ class Train(object):
         return tr_list
 
     def datasets(self):
-        train_datasets = CurrentDateset(root=self.image_path,
+        train_datasets = CurrentOcrData(root=self.image_path,
                                         pre_processes=self.pre_processes,
                                         transforms=self.transforms,
                                         filter_keys=self.filter_keys,
                                         ignore_tags=self.ignore_tags,
                                         is_training=True)
-        # valid_datasets = train_datasets
-
-        valid_datasets = CurrentDateset(root=self.root_path,
-                                        pre_processes=self.pre_processes,
-                                        transforms=self.transforms,
-                                        filter_keys=self.filter_keys,
-                                        ignore_tags=self.ignore_tags,
-                                        is_training=False)
+        valid_datasets = train_datasets
+        #
+        # valid_datasets = CurrentOcrData(root=self.image_path,
+        #                                 pre_processes=self.pre_processes,
+        #                                 transforms=self.transforms,
+        #                                 filter_keys=self.filter_keys,
+        #                                 ignore_tags=self.ignore_tags,
+        #                                 is_training=False)
         return train_datasets, valid_datasets
+
+    def data_loaders(self):
+        dataset_train, dataset_valid = self.datasets()
+        loader_train = DataLoader(
+            dataset_train,
+            batch_size=self.batch_size,
+            shuffle=True,
+            drop_last=True,
+            num_workers=self.workers,
+        )
+        loader_valid = DataLoader(
+            dataset_valid,
+            batch_size=1,
+            drop_last=False,
+            num_workers=self.workers,
+        )
+
+        return loader_train, loader_valid
+
+    def train_one_epoch(self, epoch):
+
+        self.model.train()
+        loss_train = []
+        for i, data in enumerate(self.loader_train):
+            self.scheduler(self.optimizer, i, epoch, self.best_validation_dsc)
+            x, y_true = data
+            x, y_true = x.to(self.device), y_true.to(self.device)
+
+            y_pred = self.model(x)
+            # print('1111', y_pred.size())
+            # print('2222', y_true.size())
+            loss = self.criterion(y_pred, y_true)
+
+            loss_train.append(loss.item())
+
+            self.optimizer.zero_grad()
+            loss.backward()
+            self.optimizer.step()
+
+            # lr_scheduler.step()
+            if self.step % 200 == 0:
+                print('Epoch:[{}/{}]\t iter:[{}]\t loss={:.5f}\t '.format(epoch, self.epochs, i, loss))
+
+            self.step += 1
+
+    # def eval_model(self, patience):
+    #     self.model.eval()
+    #     loss_valid = []
+    #
+    #     validation_pred = []
+    #     validation_true = []
+    #     # early_stopping = EarlyStopping(patience=patience, verbose=True)
+    #
+    #     for i, data in enumerate(self.loader_valid):
+    #         x, y_true = data
+    #         x, y_true = x.to(self.device), y_true.to(self.device)
+    #
+    #         # print(x.size())
+    #         # print(333,x[0][2])
+    #         with torch.no_grad():
+    #             y_pred = self.model(x)
+    #             loss = self.dsc_loss(y_pred, y_true)
+    #
+    #         # print(y_pred.shape)
+    #         pass
+
+    def main(self):
+        for epoch in tqdm(range(self.epochs), total=self.epochs):
+            self.train_one_epoch(epoch)
+            # self.eval_model(patience=10)
+
+        torch.save(self.model.state_dict(), os.path.join(self.weights, "unet_final.pth"))
+
+
+if __name__ == '__main__':
+    import yaml
+
+    os.environ["CUDA_VISIBLE_DEVICES"] = "1,3,5,6"
+
+    with open('config/db_resnet50.yaml', 'r') as fp:
+        config = yaml.load(fp.read(), Loader=yaml.FullLoader)
+
+    trainer = Train(configs=config)
+    trainer.main()
