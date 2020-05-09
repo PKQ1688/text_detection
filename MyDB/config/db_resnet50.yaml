@@ -1,0 +1,51 @@
+root_path:
+  image_path: "/home/shizai/data2/ocr_data/icdar2015/train/"
+  weight: "./weights"
+  pretrained_model: ""
+data:
+  process:
+    - type: IaaAugment
+      args:
+        - type: Filplr
+          args:
+            p: 0.5
+        - type: Affine
+          args:
+            rotate: [-10,10]
+        - type: Resize
+          args:
+            rotate: [0.5,3]
+    - type: EastRandomCropData
+      args:
+        size:
+          - 640
+          - 640
+        max_tries: 50
+        keep_ratio: True
+  transforms:
+    - type: ToTensor
+    - type: Normalize
+      args:
+        mean: [0.485, 0.456, 0.406]
+        std: [0.229, 0.224, 0.225]
+  filter_keys: ['img_path', 'img_name', 'text_polys', 'texts', 'ignore_tags', 'shape', 'img']
+  ignore_tags: ['*', '###']
+model_define:
+pretrained:
+  pretrained_backbone: False
+  pretrained_model: False
+trian_params:
+  batch_size: 32
+  epochs: 100
+  lr: 1.0e-4
+  works: 16
+  DateParallel: True
+inference_params:
+  thresh: 0.5
+  box_thresh: 0.5
+  max_candidates: 1000
+  unclip_ratio: 1.5
+
+
+
+

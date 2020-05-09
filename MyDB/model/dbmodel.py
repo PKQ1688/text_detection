@@ -9,31 +9,25 @@ from model.segmentation_db import DBHead
 
 
 class DBModel(nn.Module):
-    def __init__(self, backbone, pretrained=False):
-        """
-        DBNET
-        :param model_config: 模型配置
-        """
+    def __init__(self, backbone):
         super().__init__()
         self.backbone = backbone
         self.out_channels = self.backbone.out_channels
         self.segmentation_head = DBHead(in_channels=self.out_channels)
-        print('3333', self.out_channels)
 
     def forward(self, x):
-        # print(model_config['segmentation_body']['args'])
         _, _, H, W = x.size()
-        backbone_out = self.backbone(x)
-        print(backbone_out.keys())
-        backbone_out = backbone_out['0']
-        print(111, backbone_out.size())
-        y = self.segmentation_head(backbone_out)
+        # backbone_out = self.backbone(x)
+        features = self.backbone(x)
+        features = features['0']
+        print(111, features.size())
+        y = self.segmentation_head(features)
         y = F.interpolate(y, size=(H, W), mode='bilinear', align_corners=True)
         return y
 
 
-def dbnet_resnet50_fpn(pretrained=False):
-    backbone = resnet_fpn_backbone('resnet50', pretrained)
+def dbnet_resnet50_fpn(pretrained_backbone=False):
+    backbone = resnet_fpn_backbone('resnet50', pretrained_backbone)
     db_model = DBModel(backbone)
     return db_model
 
