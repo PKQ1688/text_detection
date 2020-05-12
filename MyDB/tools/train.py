@@ -17,6 +17,7 @@ from utils import lr_scheduler
 from tqdm import tqdm
 
 import numpy as np
+from tools.eval import EvalChinaLife
 
 
 class Train(object):
@@ -55,7 +56,7 @@ class Train(object):
 
         self.model.to(self.device)
 
-        self.best_validation_dsc = 0.0
+        self.best_hmean = 0.0
 
         self.loader_train, self.loader_valid = self.data_loaders()
 
@@ -124,7 +125,7 @@ class Train(object):
         self.model.train()
         loss_train = []
         for i, data in enumerate(self.loader_train):
-            self.scheduler(self.optimizer, i, epoch, self.best_validation_dsc)
+            self.scheduler(self.optimizer, i, epoch, self.best_hmean)
             x, targets = data
             x = x.to(self.device)
             # print(x.shape)
@@ -147,13 +148,14 @@ class Train(object):
             self.optimizer.step()
 
             # lr_scheduler.step()
-            if self.step % 200 == 0:
+            if self.step % 100 == 0:
                 print('Epoch:[{}/{}]\t iter:[{}]\t loss={:.5f}\t '.format(epoch, self.epochs, i, loss))
+                print('lr:', self.lr)
 
             self.step += 1
 
     # def eval_model(self, patience):
-    #     self.model.eval()
+    # self.model.eval()
     #     loss_valid = []
     #
     #     validation_pred = []
@@ -177,6 +179,11 @@ class Train(object):
         for epoch in tqdm(range(self.epochs), total=self.epochs):
             self.train_one_epoch(epoch)
             # self.eval_model(patience=10)
+            eval_path = '/home/shizai/data2/ocr_data/china_life_test_data'
+            _, _, hmean = EvalChinaLife(eval_path).main()
+            if hmean > self.best_hmean:
+                self.best_hmean = hmean
+                torch.save(self.model.state_dict(), os.path.join(self.weights, "DB_{}_{:.3f}.pth".format(epoch, hmean)))
 
         torch.save(self.model.state_dict(), os.path.join(self.weights, "DB_final.pth"))
 

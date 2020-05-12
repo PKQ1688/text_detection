@@ -304,13 +304,13 @@ def evaluate_method(gtFilePath, submFilePath, evaluationParams):
                 sampleAP = compute_ap(arrSampleConfidences, arrSampleMatch, numGtCare)
 
         hmean = 0 if (precision + recall) == 0 else 2.0 * precision * recall / (precision + recall)
-        print('==' * 28)
-        print('ID:{:3d} P {:3d}% R {:3d}% Hmean {:3d}% Matched:{:2d} GT:{:2d} Det:{:2d}'.format(ids + 1,
-                                                                                                int(precision * 100),
-                                                                                                int(recall * 100),
-                                                                                                int(hmean * 100),
-                                                                                                detMatched, numGtCare,
-                                                                                                numDetCare))
+        # print('==' * 28)
+        # print('ID:{:3d} P {:3d}% R {:3d}% Hmean {:3d}% Matched:{:2d} GT:{:2d} Det:{:2d}'.format(ids + 1,
+        #                                                                                         int(precision * 100),
+        #                                                                                         int(recall * 100),
+        #                                                                                         int(hmean * 100),
+        #                                                                                         detMatched, numGtCare,
+        #                                                                                         numDetCare))
         matchedSum += detMatched
         numGlobalCareGt += numGtCare
         numGlobalCareDet += numDetCare

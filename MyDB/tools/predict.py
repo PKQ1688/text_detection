@@ -117,7 +117,7 @@ class OnePredict(object):
                         # res.write(result + ',' + str(score) + "\n")
                         res.write(result + "\n")
 
-    def inference(self, img_path, is_resize=False, is_visualize=True, is_format_output=False):
+    def inference(self, img_path, is_resize=False, is_visualize=True, is_format_output=False, out_path=None):
         img = cv2.imread(img_path)
 
         img = cv2.cvtColor(img, cv2.COLOR_BGR2RGB)
@@ -140,17 +140,11 @@ class OnePredict(object):
         with torch.no_grad():
             # print('tensor', tensor.shape)
             preds = self.model(tensor)
-            print(preds)
+            # print(preds)
 
             outputs = self.post_processing.represent(batch=batch, pred=preds, is_output_polygon=self.polygon)
 
             # print('output', outputs)
-
-        # is_format_output = True
-        if is_format_output is True:
-            if not os.path.isdir(self.result_dir):
-                os.mkdir(self.result_dir)
-            self.format_output(batch, outputs)
 
         # is_visualize = False
         if is_visualize:
@@ -159,6 +153,14 @@ class OnePredict(object):
                 os.mkdir(self.result_dir)
             cv2.imwrite(os.path.join(self.result_dir, img_path.split('/')[-1].split('.')[0] + '.jpg'),
                         vis_img)
+
+        # is_format_output = True
+        if is_format_output is True:
+            if out_path is not None:
+                self.result_dir = out_path
+            if not os.path.isdir(self.result_dir):
+                os.mkdir(self.result_dir)
+            self.format_output(batch, outputs)
 
         return outputs
 

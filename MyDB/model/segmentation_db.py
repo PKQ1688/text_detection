@@ -37,11 +37,12 @@ class DBHead(nn.Module):
     def forward(self, x):
         shrink_maps = self.binarize(x)
         threshold_maps = self.thresh(x)
+        binary_maps = self.step_function(shrink_maps, threshold_maps)
         if self.training:
-            binary_maps = self.step_function(shrink_maps, threshold_maps)
             y = torch.cat((shrink_maps, threshold_maps, binary_maps), dim=1)
         else:
-            y = torch.cat((shrink_maps, threshold_maps), dim=1)
+            # y = torch.cat((shrink_maps, threshold_maps), dim=1)
+            y = torch.cat((binary_maps, threshold_maps), dim=1)
         return y
 
     def weights_init(self, m):

@@ -1,22 +1,22 @@
 root_path:
   image_path: "/home/shizai/data2/ocr_data/icdar2015/train/"
-  weight: "./weights"
+  weight: "./weights/"
   pretrained_model: ""
   result_dir: "images_result/"
   model_path: "./weights/unet_final.pth"
 data:
   process:
-#    - type: IaaAugment
-#      args:
-#        - type: Filplr
-#          args:
-#            p: 0.5
-#        - type: Affine
-#          args:
-#            rotate: [-10,10]
-#        - type: Resize
-#          args:
-#            rotate: [0.5,3]
+    - type: IaaAugment
+      args:
+        - type: Fliplr
+          args:
+            p: 0.5
+        - type: Affine
+          args:
+            rotate: [-10,10]
+        - type: Resize
+          args:
+            size: [0.5,3]
     - type: EastRandomCropData
       args:
         size:
