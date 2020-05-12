@@ -16,9 +16,8 @@ from utils import lr_scheduler
 
 from tqdm import tqdm
 
-import numpy as np
 from tools.eval import EvalChinaLife
-
+import shutil
 
 class Train(object):
     def __init__(self, configs):
@@ -180,10 +179,14 @@ class Train(object):
             self.train_one_epoch(epoch)
             # self.eval_model(patience=10)
             eval_path = '/home/shizai/data2/ocr_data/china_life_test_data'
+            # if hmean > self.best_hmean:
+            #     self.best_hmean = hmean
+            torch.save(self.model.state_dict(), os.path.join(self.weights, "DB_{}.pth".format(epoch)))
             _, _, hmean = EvalChinaLife(eval_path).main()
             if hmean > self.best_hmean:
                 self.best_hmean = hmean
-                torch.save(self.model.state_dict(), os.path.join(self.weights, "DB_{}_{:.3f}.pth".format(epoch, hmean)))
+            else:
+                os.remove("DB_{}.pth".format(epoch))
 
         torch.save(self.model.state_dict(), os.path.join(self.weights, "DB_final.pth"))
 
@@ -191,7 +194,7 @@ class Train(object):
 if __name__ == '__main__':
     import yaml
 
-    os.environ["CUDA_VISIBLE_DEVICES"] = "3,5"
+    os.environ["CUDA_VISIBLE_DEVICES"] = "3,6"
 
     with open('config/db_resnet50.yaml', 'r') as fp:
         config = yaml.load(fp.read(), Loader=yaml.FullLoader)
