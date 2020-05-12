@@ -20,7 +20,7 @@ class DBModel(nn.Module):
         # backbone_out = self.backbone(x)
         features = self.backbone(x)
         features = features['0']
-        print(111, features.size())
+        # print(111, features.size())
         y = self.segmentation_head(features)
         y = F.interpolate(y, size=(H, W), mode='bilinear', align_corners=True)
         return y

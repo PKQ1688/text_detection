@@ -125,14 +125,21 @@ class Train(object):
         loss_train = []
         for i, data in enumerate(self.loader_train):
             self.scheduler(self.optimizer, i, epoch, self.best_validation_dsc)
-            x, y_true = data
-            x, y_true = x.to(self.device), y_true.to(self.device)
+            x, targets = data
+            x = x.to(self.device)
+            # print(x.shape)
+            # print(x)
+            # print(targets.keys())
+            for key, value in targets.items():
+                if value is not None:
+                    if isinstance(value, torch.Tensor):
+                        targets[key] = value.to(self.device)
 
             y_pred = self.model(x)
             # print('1111', y_pred.size())
             # print('2222', y_true.size())
-            loss = self.criterion(y_pred, y_true)
-
+            loss_dict = self.criterion(y_pred, targets)
+            loss = loss_dict['loss']
             loss_train.append(loss.item())
 
             self.optimizer.zero_grad()
@@ -171,13 +178,13 @@ class Train(object):
             self.train_one_epoch(epoch)
             # self.eval_model(patience=10)
 
-        torch.save(self.model.state_dict(), os.path.join(self.weights, "unet_final.pth"))
+        torch.save(self.model.state_dict(), os.path.join(self.weights, "DB_final.pth"))
 
 
 if __name__ == '__main__':
     import yaml
 
-    os.environ["CUDA_VISIBLE_DEVICES"] = "1,3,5,6"
+    os.environ["CUDA_VISIBLE_DEVICES"] = "3,5"
 
     with open('config/db_resnet50.yaml', 'r') as fp:
         config = yaml.load(fp.read(), Loader=yaml.FullLoader)
