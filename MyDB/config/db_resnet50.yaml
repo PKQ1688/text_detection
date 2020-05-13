@@ -1,29 +1,30 @@
 root_path:
-  image_path: "/home/shizai/data2/ocr_data/icdar2015/train/"
+  image_path: "/home/shizai/data2/ocr_data/icdar2015/train/one_image/"
+  eval_path: "/home/shizai/data2/ocr_data/icdar2015/train/one_image/"
   weight: "./weights/"
   pretrained_model: ""
   result_dir: "images_result/"
   model_path: "./weights/unet_final.pth"
 data:
   process:
-    - type: IaaAugment
-      args:
-        - type: Fliplr
-          args:
-            p: 0.5
-        - type: Affine
-          args:
-            rotate: [-10,10]
-        - type: Resize
-          args:
-            size: [0.5,3]
-    - type: EastRandomCropData
-      args:
-        size:
-          - 640
-          - 640
-        max_tries: 50
-        keep_ratio: True
+#    - type: IaaAugment
+#      args:
+#        - type: Fliplr
+#          args:
+#            p: 0.5
+#        - type: Affine
+#          args:
+#            rotate: [-10,10]
+#        - type: Resize
+#          args:
+#            size: [0.5,3]
+#    - type: EastRandomCropData
+#      args:
+#        size:
+#          - 640
+#          - 640
+#        max_tries: 50
+#        keep_ratio: True
     - type: MakeBorderMap
       args:
         shrink_ratio: 0.4
@@ -43,14 +44,14 @@ pretrained:
   pretrained_backbone: False
   pretrained_model: False
 train_params:
-  batch_size: 32
+  batch_size: 1
   epochs: 100
   lr: 1.0e-4
-  workers: 16
+  workers: 0
   DateParallel: True
 inference_params:
   polygon: False
-  short_size: 1152
+  short_size: 736
   thresh: 0.5
   box_thresh: 0.5
   max_candidates: 1000

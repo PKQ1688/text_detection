@@ -9,19 +9,26 @@ from ocr_evaluation.hmean import compute_hmean
 
 
 class EvalChinaLife(object):
-    def __init__(self, eval_path):
+    def __init__(self, eval_path, use_model=None):
         self.eval_path = eval_path
         self.img_path = os.path.join(self.eval_path, 'imgs')
         self.img_list = os.listdir(self.img_path)
         with open('config/db_resnet50.yaml', 'r') as fp:
             config = yaml.load(fp.read(), Loader=yaml.FullLoader)
-        self.img_predict = OnePredict(configs=config)
+        self.img_predict = OnePredict(configs=config, use_model=use_model)
 
     def out_file(self, out_path):
-        for img_name in tqdm(self.img_list):
+        i = 0
+        for img_name in self.img_list:
+            is_vis = False
+            # if i % 200 == 0:
+            #     is_vis = True
+            # else:
+            #     is_vis = False
             _ = self.img_predict.inference(
                 img_path=os.path.join(self.img_path, img_name),
-                is_visualize=False, is_format_output=True, out_path=out_path)
+                is_visualize=is_vis, is_format_output=True, out_path=out_path)
+            i += 1
 
     def main(self):
         out_path = os.path.join(self.eval_path, 'submit')

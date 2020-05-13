@@ -1,0 +1,32 @@
+batch_size: 32
+epochs: 100
+lr: 1.0e-4
+
+device: "cuda"
+workers: 16
+
+vis_images: 200  # number of visualization images to save in log file (default: 200)
+vis_freq: 10  # frequency of saving images to log file (default: 10)
+
+weights: "./weights"  # folder to save weights
+
+logs: "./logs"  # folder to save logs
+#images_path: "/home/shizai/data2/ocr_data/midv_500/"  # root folder with images
+#images_path: "/home/shizai/data3/xiacong/card_border_callout/"
+images_path: "/home/shizai/data2/ocr_data/third_data"
+
+#image_size: 256  # target input image size (default: 256)
+
+#aug_scale: 0.05  # scale factor range for augmentation (default: 0.05)
+#aug_angle: 15  # rotation angle range in degrees for augmentation (default: 15)
+
+is_resize: True
+image_short_side: 512
+
+is_padding: True
+#image_long_side : 768
+
+pre_train: False
+model_path: "./weights/unet_ocr_adam.pth"
+
+DateParallel: True

@@ -36,7 +36,7 @@ def compute_hmean(submit_file_path):
                                                    TL_iou.default_evaluation_params, TL_iou.validate_data,
                                                    TL_iou.evaluate_method)
 
-    # print(resDict)
+    print(resDict)
     recall = resDict['method']['recall']
 
     precision = resDict['method']['precision']

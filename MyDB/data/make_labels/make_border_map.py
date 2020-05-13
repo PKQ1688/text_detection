@@ -7,6 +7,8 @@ np.seterr(divide='ignore', invalid='ignore')
 import pyclipper
 from shapely.geometry import Polygon
 
+np.seterr(divide='ignore', invalid='ignore')
+
 
 class MakeBorderMap(object):
     def __init__(self, shrink_ratio=0.4, thresh_min=0.3, thresh_max=0.7):
@@ -100,7 +102,7 @@ class MakeBorderMap(object):
         square_distance = np.square(point_1[0] - point_2[0]) + np.square(point_1[1] - point_2[1])
 
         cosin = (square_distance - square_distance_1 - square_distance_2) / (
-                    2 * np.sqrt(square_distance_1 * square_distance_2))
+                2 * np.sqrt(square_distance_1 * square_distance_2))
         square_sin = 1 - np.square(cosin)
         square_sin = np.nan_to_num(square_sin)
 

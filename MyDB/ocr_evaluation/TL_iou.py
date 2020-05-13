@@ -29,7 +29,7 @@ def default_evaluation_params():
     return {
         'IOU_CONSTRAINT': 0.5,
         'AREA_PRECISION_CONSTRAINT': 0.5,
-        'GT_SAMPLE_NAME_2_ID': 'img_([0-9]+).txt',
+        'GT_SAMPLE_NAME_2_ID': 'gt_img_([0-9]+).txt',
         'DET_SAMPLE_NAME_2_ID': 'res_img_([0-9]+).txt',
         'LTRB': False,  # LTRB:2points(left,top,right,bottom) or 4 points(x1,y1,x2,y2,x3,y3,x4,y4)
         'CRLF': False,  # Lines are delimited by Windows CRLF format
@@ -304,13 +304,13 @@ def evaluate_method(gtFilePath, submFilePath, evaluationParams):
                 sampleAP = compute_ap(arrSampleConfidences, arrSampleMatch, numGtCare)
 
         hmean = 0 if (precision + recall) == 0 else 2.0 * precision * recall / (precision + recall)
-        print('==' * 28)
-        print('ID:{:3d} P {:3d}% R {:3d}% Hmean {:3d}% Matched:{:2d} GT:{:2d} Det:{:2d}'.format(ids + 1,
-                                                                                                int(precision * 100),
-                                                                                                int(recall * 100),
-                                                                                                int(hmean * 100),
-                                                                                                detMatched, numGtCare,
-                                                                                                numDetCare))
+        # print('==' * 28)
+        # print('ID:{:3d} P {:3d}% R {:3d}% Hmean {:3d}% Matched:{:2d} GT:{:2d} Det:{:2d}'.format(ids + 1,
+        #                                                                                         int(precision * 100),
+        #                                                                                         int(recall * 100),
+        #                                                                                         int(hmean * 100),
+        #                                                                                         detMatched, numGtCare,
+        #                                                                                         numDetCare))
         matchedSum += detMatched
         numGlobalCareGt += numGtCare
         numGlobalCareDet += numDetCare

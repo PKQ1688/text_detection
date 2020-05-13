@@ -23,7 +23,7 @@ class CurrentOcrData(object):
         self.init_pre_process()
 
     def __len__(self):
-        return len(self.imgs)
+        return len(self.imgs)  # - 1
 
     def __getitem__(self, item):
         img_path = os.path.join(self.root, 'imgs', self.imgs[item])

@@ -13,7 +13,7 @@ import numpy as np
 
 
 class OnePredict(object):
-    def __init__(self, configs):
+    def __init__(self, configs, use_model=None):
         self.model = dbnet_resnet50_fpn()
 
         self.polygon = configs['inference_params']['polygon']
@@ -30,6 +30,8 @@ class OnePredict(object):
             unclip_ratio=self.unclip_ratio
         )
         self.model_path = configs['root_path']['model_path']
+        if use_model is not None:
+            self.model_path = use_model
         if not os.path.exists(self.model_path):
             print("Checkpoint not found: " + self.model_path)
 

@@ -17,13 +17,24 @@ from utils import lr_scheduler
 from tqdm import tqdm
 
 from tools.eval import EvalChinaLife
-import shutil
+
+from prefetch_generator import BackgroundGenerator
+
+torch.multiprocessing.set_start_method('spawn')
+
+
+class DataLoaderX(DataLoader):
+
+    def __iter__(self):
+        return BackgroundGenerator(super().__iter__())
+
 
 class Train(object):
     def __init__(self, configs):
         self.device = torch.device("cuda") if torch.cuda.is_available() else torch.device("cpu")
 
         self.image_path = configs['root_path']['image_path']
+        self.eval_path = config['root_path']['eval_path']
 
         self.pre_processes = configs['data']['process']
         transforms_config = configs['data']['transforms']
@@ -64,7 +75,7 @@ class Train(object):
         self.optimizer = optim.Adam(self.params, lr=self.lr, weight_decay=0.0005)
         # self.optimizer = torch.optim.SGD(self.params, lr=self.lr, momentum=0.9, weight_decay=0.0005)
 
-        self.scheduler = lr_scheduler.LR_Scheduler_Head('poly', self.lr,
+        self.scheduler = lr_scheduler.LR_Scheduler_Head('cos', self.lr,
                                                         self.epochs, len(self.loader_train))
 
         self.criterion = DBLoss()
@@ -103,14 +114,15 @@ class Train(object):
 
     def data_loaders(self):
         dataset_train, dataset_valid = self.datasets()
-        loader_train = DataLoader(
+        loader_train = DataLoaderX(
             dataset_train,
             batch_size=self.batch_size,
             shuffle=True,
-            drop_last=True,
+            drop_last=False,
             num_workers=self.workers,
+            # pin_memory=True
         )
-        loader_valid = DataLoader(
+        loader_valid = DataLoaderX(
             dataset_valid,
             batch_size=1,
             drop_last=False,
@@ -147,7 +159,7 @@ class Train(object):
             self.optimizer.step()
 
             # lr_scheduler.step()
-            if self.step % 100 == 0:
+            if self.step % 1 == 0:
                 print('Epoch:[{}/{}]\t iter:[{}]\t loss={:.5f}\t '.format(epoch, self.epochs, i, loss))
                 print('lr:', self.lr)
 
@@ -175,18 +187,19 @@ class Train(object):
     #         pass
 
     def main(self):
+        # eval_path = '/home/shizai/data2/ocr_data/china_life_test_data'
         for epoch in tqdm(range(self.epochs), total=self.epochs):
             self.train_one_epoch(epoch)
             # self.eval_model(patience=10)
-            eval_path = '/home/shizai/data2/ocr_data/china_life_test_data'
-            # if hmean > self.best_hmean:
-            #     self.best_hmean = hmean
-            torch.save(self.model.state_dict(), os.path.join(self.weights, "DB_{}.pth".format(epoch)))
-            _, _, hmean = EvalChinaLife(eval_path).main()
-            if hmean > self.best_hmean:
-                self.best_hmean = hmean
-            else:
-                os.remove("DB_{}.pth".format(epoch))
+
+            if epoch % 2 == 1:
+                use_model = os.path.join(self.weights, "DB_{}.pth".format(epoch))
+                torch.save(self.model.state_dict(), use_model)
+                _, _, hmean = EvalChinaLife(self.eval_path, use_model).main()
+                if hmean > self.best_hmean:
+                    self.best_hmean = hmean
+                else:
+                    os.remove(use_model)
 
         torch.save(self.model.state_dict(), os.path.join(self.weights, "DB_final.pth"))
 
@@ -194,7 +207,7 @@ class Train(object):
 if __name__ == '__main__':
     import yaml
 
-    os.environ["CUDA_VISIBLE_DEVICES"] = "3,6"
+    os.environ["CUDA_VISIBLE_DEVICES"] = "5,6"
 
     with open('config/db_resnet50.yaml', 'r') as fp:
         config = yaml.load(fp.read(), Loader=yaml.FullLoader)
