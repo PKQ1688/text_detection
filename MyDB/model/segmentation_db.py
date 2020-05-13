@@ -41,8 +41,8 @@ class DBHead(nn.Module):
         if self.training:
             y = torch.cat((shrink_maps, threshold_maps, binary_maps), dim=1)
         else:
-            # y = torch.cat((shrink_maps, threshold_maps), dim=1)
-            y = torch.cat((binary_maps, threshold_maps), dim=1)
+            y = torch.cat((shrink_maps, threshold_maps), dim=1)
+            # y = torch.cat((binary_maps, threshold_maps), dim=1)
         return y
 
     def weights_init(self, m):

@@ -1,46 +1,43 @@
 # -*- coding:utf-8 -*-
 # @author :adolf
-import torch.nn.functional as F
 import torch.nn as nn
-import torch
-
-from backbone.backbone_utils import resnet_fpn_backbone
 from model.segmentation_db import DBHead
+from backbone.resnet import *
+from model.segmentation_basic import FPN
+
+import torch.nn.functional as F
+import torch
 
 
 class DBModel(nn.Module):
-    def __init__(self, backbone):
+    def __init__(self, pretrained=False):
+        """
+        DBNET
+        :param model_config: 模型配置
+        """
         super().__init__()
-        self.backbone = backbone
-        self.out_channels = self.backbone.out_channels
-        self.segmentation_head = DBHead(in_channels=self.out_channels)
+
+        self.backbone = resnet50(pretrained=pretrained)
+        self.segmentation_body = FPN(backbone_out_channels=[256, 512, 1024, 2048])
+        self.segmentation_head = DBHead()
 
     def forward(self, x):
+        # print(model_config['segmentation_body']['args'])
         _, _, H, W = x.size()
-        # backbone_out = self.backbone(x)
-        features = self.backbone(x)
-        features = features['0']
-        # print(111, features.size())
-        y = self.segmentation_head(features)
+        backbone_out = self.backbone(x)
+        segmentation_body_out = self.segmentation_body(backbone_out)
+        # print(111, segmentation_body_out.size())
+        y = self.segmentation_head(segmentation_body_out)
         y = F.interpolate(y, size=(H, W), mode='bilinear', align_corners=True)
         return y
 
 
-def dbnet_resnet50_fpn(pretrained_backbone=False):
-    backbone = resnet_fpn_backbone('resnet50', pretrained_backbone)
-    db_model = DBModel(backbone)
-    return db_model
-
-
 if __name__ == '__main__':
-    import os
-
-    os.environ["CUDA_VISIBLE_DEVICES"] = "1"
-    device = torch.device("cuda") if torch.cuda.is_available() else torch.device("cpu")
+    device = torch.device("cpu")
 
     x = torch.zeros(1, 3, 640, 640).to(device)
 
-    model = dbnet_resnet50_fpn().to(device)
+    model = DBModel().to(device)
     import time
 
     print('222')
@@ -48,5 +45,4 @@ if __name__ == '__main__':
     y = model(x)
     print(time.time() - tic)
     print(y.shape)
-    # print(model)
-    # torch.save(model.state_dict(), 'PAN.pth')
+    print(model)

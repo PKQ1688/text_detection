@@ -8,7 +8,8 @@ from torchvision import transforms as T
 from torch.utils.data import DataLoader
 import torch.optim as optim
 
-from model.dbmodel import dbnet_resnet50_fpn
+# from model.dbmodel import dbnet_resnet50_fpn
+from model.dbmodel import DBModel
 from model.loss import DBLoss
 import torch.nn as nn
 
@@ -57,7 +58,8 @@ class Train(object):
 
         model_path = configs['root_path']['pretrained_model']
 
-        self.model = dbnet_resnet50_fpn(pre_train_backbone)
+        # self.model = dbnet_resnet50_fpn(pre_train_backbone)
+        self.model = DBModel(pre_train_backbone)
         if pre_train:
             self.model.load_state_dict(torch.load(model_path, map_location=self.device), strict=False)
 
@@ -77,6 +79,8 @@ class Train(object):
 
         self.scheduler = lr_scheduler.LR_Scheduler_Head('cos', self.lr,
                                                         self.epochs, len(self.loader_train))
+
+        # self.lr_scheduler = torch.optim.lr_scheduler.StepLR(self.optimizer, step_size=10, gamma=0.1)
 
         self.criterion = DBLoss()
 
@@ -159,9 +163,9 @@ class Train(object):
             self.optimizer.step()
 
             # lr_scheduler.step()
-            if self.step % 1 == 0:
+            if self.step % 100 == 0:
                 print('Epoch:[{}/{}]\t iter:[{}]\t loss={:.5f}\t '.format(epoch, self.epochs, i, loss))
-                print('lr:', self.lr)
+                print(self.optimizer.param_groups[0]['lr'])
 
             self.step += 1
 
@@ -190,10 +194,12 @@ class Train(object):
         # eval_path = '/home/shizai/data2/ocr_data/china_life_test_data'
         for epoch in tqdm(range(self.epochs), total=self.epochs):
             self.train_one_epoch(epoch)
+            # self.lr_scheduler.step()
             # self.eval_model(patience=10)
 
             if epoch % 2 == 1:
                 use_model = os.path.join(self.weights, "DB_{}.pth".format(epoch))
+                print(use_model)
                 torch.save(self.model.state_dict(), use_model)
                 _, _, hmean = EvalChinaLife(self.eval_path, use_model).main()
                 if hmean > self.best_hmean:
@@ -207,7 +213,7 @@ class Train(object):
 if __name__ == '__main__':
     import yaml
 
-    os.environ["CUDA_VISIBLE_DEVICES"] = "5,6"
+    os.environ["CUDA_VISIBLE_DEVICES"] = "3"
 
     with open('config/db_resnet50.yaml', 'r') as fp:
         config = yaml.load(fp.read(), Loader=yaml.FullLoader)

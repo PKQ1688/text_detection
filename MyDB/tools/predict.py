@@ -2,8 +2,8 @@
 # @author :adolf
 import os
 from post_process.seg_detector_representer import SegDetectorRepresenter
-from model.dbmodel import dbnet_resnet50_fpn
-
+# from model.dbmodel import dbnet_resnet50_fpn
+from model.dbmodel import DBModel
 import torch
 import torch.nn as nn
 from torchvision import transforms as T
@@ -14,14 +14,16 @@ import numpy as np
 
 class OnePredict(object):
     def __init__(self, configs, use_model=None):
-        self.model = dbnet_resnet50_fpn()
-
+        # self.model = dbnet_resnet50_fpn()
+        self.model = DBModel()
         self.polygon = configs['inference_params']['polygon']
 
         self.thresh = configs['inference_params']['thresh']
         self.box_thresh = configs['inference_params']['box_thresh']
         self.max_candidates = configs['inference_params']['max_candidates']
         self.unclip_ratio = configs['inference_params']['unclip_ratio']
+
+        self.DateParallel = configs['train_params']['DateParallel']
 
         self.post_processing = SegDetectorRepresenter(
             thresh=self.thresh,
@@ -59,7 +61,8 @@ class OnePredict(object):
             self.device = torch.device('cpu')
 
     def resume(self):
-        self.model = nn.DataParallel(self.model)
+        if self.DateParallel:
+            self.model = nn.DataParallel(self.model)
         self.model.load_state_dict(torch.load(self.model_path, map_location=self.device), strict=True)
         self.model.to(self.device)
 
@@ -170,9 +173,9 @@ class OnePredict(object):
 if __name__ == '__main__':
     import yaml
 
-    os.environ['CUDA_VISIBLE_DEVICES'] = "1"
+    os.environ['CUDA_VISIBLE_DEVICES'] = "3"
 
-    img_path = 'test_imgs/1.jpg'
+    img_path = "/home/shizai/data2/ocr_data/icdar2015/train/one_image/imgs/img_666.jpg"
     with open('config/db_resnet50.yaml', 'r') as fp:
         config = yaml.load(fp.read(), Loader=yaml.FullLoader)
     img_predict = OnePredict(configs=config)

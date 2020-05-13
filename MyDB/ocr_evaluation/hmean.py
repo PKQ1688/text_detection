@@ -5,7 +5,7 @@ import sys
 
 
 def compute_hmean(submit_file_path):
-    print('text_location <==> Evaluation <==> Compute Hmean <==> Begin')
+    # print('text_location <==> Evaluation <==> Compute Hmean <==> Begin')
 
     # basename = os.path.basename(submit_file_path)
     # assert basename == 'submit.zip', 'There is no submit.zip'
@@ -36,7 +36,7 @@ def compute_hmean(submit_file_path):
                                                    TL_iou.default_evaluation_params, TL_iou.validate_data,
                                                    TL_iou.evaluate_method)
 
-    print(resDict)
+    # print(resDict)
     recall = resDict['method']['recall']
 
     precision = resDict['method']['precision']
