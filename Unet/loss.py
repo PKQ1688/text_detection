@@ -1,4 +1,3 @@
-# -*- coding:utf-8 -*-
 # @author :adolf
 import torch.nn as nn
 
