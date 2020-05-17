@@ -6,7 +6,7 @@ from backbone.utils import IntermediateLayerGetter
 
 from torchvision.ops import misc as misc_nn_ops
 
-from backbone import resnet
+from backbone import resnet_v2 as resnet
 
 
 class BackboneWithFPN(nn.Module):

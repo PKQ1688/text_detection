@@ -4,8 +4,8 @@ import torch.nn.functional as F
 import torch.nn as nn
 import torch
 
-from backbone.HRNet.seg_hrnet import get_seg_model
-from backbone.segmentation_head import DBHead
+from base_model.HRNet.seg_hrnet import get_seg_model
+from base_model.segmentation_head import DBHead
 import yaml
 
 

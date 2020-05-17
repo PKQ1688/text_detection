@@ -2,8 +2,8 @@
 # @author :adolf
 import os
 from post_process.seg_detector_representer import SegDetectorRepresenter
-# from model.dbmodel import dbnet_resnet50_fpn
-from model.dbmodel import DBModel
+from model.dbmodel_v2 import dbnet_resnet50_fpn
+# from model.dbmodel import DBModel
 import torch
 import torch.nn as nn
 from torchvision import transforms as T
@@ -14,8 +14,8 @@ import numpy as np
 
 class OnePredict(object):
     def __init__(self, configs, use_model=None):
-        # self.model = dbnet_resnet50_fpn()
-        self.model = DBModel()
+        self.model = dbnet_resnet50_fpn()
+        # self.model = DBModel()
         self.polygon = configs['inference_params']['polygon']
 
         self.thresh = configs['inference_params']['thresh']
@@ -122,8 +122,32 @@ class OnePredict(object):
                         # res.write(result + ',' + str(score) + "\n")
                         res.write(result + "\n")
 
+    def binarizer(self, pred):
+        return pred > self.thresh
+
+    def my_post_process(self, pred):
+        segmentation = pred[0, 0, :, :]
+        print('segmentation', segmentation)
+        threshold = pred[0:, 1, :, :]
+        segmentation = self.binarizer(segmentation)
+        print(segmentation.size())
+        segmentation = segmentation.cpu().numpy()
+        threshold = threshold.cpu().numpy()
+
+        segmentation = (segmentation * 255).astype(np.uint8)
+        threshold = (threshold * 255).astype(np.uint8)
+        print(threshold.shape)
+        # segmentation = segmentation.transpose(1, 2, 0)
+        # threshold = threshold.transpose(1, 2, 0)
+        print('222', segmentation.shape)
+        print(segmentation)
+        cv2.imwrite('images_result/mask.jpg', segmentation)
+        cv2.imwrite('images_result/thres.jpg', threshold)
+
     def inference(self, img_path, is_resize=False, is_visualize=True, is_format_output=False, out_path=None):
         img = cv2.imread(img_path)
+
+        # print('1111', img.shape)
 
         img = cv2.cvtColor(img, cv2.COLOR_BGR2RGB)
 
@@ -132,7 +156,9 @@ class OnePredict(object):
             scale = self.short_size / min(h, w)
             img = cv2.resize(img, None, fx=scale, fy=scale)
 
+        print('before transform', img)
         tensor = self.transform(img)
+        print('after transform', tensor)
         tensor = tensor.unsqueeze_(0)
 
         tensor = tensor.to(self.device)
@@ -143,10 +169,12 @@ class OnePredict(object):
         batch['image'] = tensor
 
         with torch.no_grad():
-            # print('tensor', tensor.shape)
+            print(tensor.size())
+            print('tensor', tensor)
             preds = self.model(tensor)
-            # print(preds)
+            print(111, preds)
 
+            self.my_post_process(preds)
             outputs = self.post_processing.represent(batch=batch, pred=preds, is_output_polygon=self.polygon)
 
             # print('output', outputs)
@@ -173,12 +201,13 @@ class OnePredict(object):
 if __name__ == '__main__':
     import yaml
 
-    os.environ['CUDA_VISIBLE_DEVICES'] = "3"
+    os.environ['CUDA_VISIBLE_DEVICES'] = "2"
 
-    img_path = "/home/shizai/data2/ocr_data/icdar2015/train/one_image/imgs/img_666.jpg"
+    img_path = "/home/shizai/data2/ocr_data/icdar2015/train/imgs/img_251.jpg"
+    # img_path = 'test_imgs/1.jpg'
     with open('config/db_resnet50.yaml', 'r') as fp:
         config = yaml.load(fp.read(), Loader=yaml.FullLoader)
-    img_predict = OnePredict(configs=config)
+    img_predict = OnePredict(configs=config, use_model='weights/DB_final.pth')
     outputs = img_predict.inference(
-        img_path=img_path,
-        is_visualize=True, is_format_output=False, is_resize=False)
+        img_path=img_path, is_resize=False,
+        is_visualize=True, is_format_output=False)

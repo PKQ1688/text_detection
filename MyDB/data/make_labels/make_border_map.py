@@ -3,11 +3,8 @@
 import cv2
 import numpy as np
 
-np.seterr(divide='ignore', invalid='ignore')
 import pyclipper
 from shapely.geometry import Polygon
-
-np.seterr(divide='ignore', invalid='ignore')
 
 
 class MakeBorderMap(object):
@@ -107,6 +104,7 @@ class MakeBorderMap(object):
         square_sin = np.nan_to_num(square_sin)
 
         result = np.sqrt(square_distance_1 * square_distance_2 * square_sin / square_distance)
+        np.seterr(divide='ignore', invalid='ignore')
         result[cosin < 0] = np.sqrt(np.fmin(square_distance_1, square_distance_2))[cosin < 0]
         # self.extend_line(point_1, point_2, result)
         return result
@@ -119,3 +117,5 @@ class MakeBorderMap(object):
                       int(round(point_2[1] + (point_2[1] - point_1[1]) * (1 + self.shrink_ratio))))
         cv2.line(result, tuple(ex_point_2), tuple(point_2), 4096.0, 1, lineType=cv2.LINE_AA, shift=0)
         return ex_point_1, ex_point_2
+
+

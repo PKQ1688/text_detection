@@ -47,10 +47,10 @@ def demo_visualize(image_path, output):
 class OnePredict(object):
     def __init__(self, params):
         self.params = params
-        # self.model = DBModel(params['model_config'])
-        db_args = {'out_channels': 2,
-                   'k': 50}
-        self.model = HRNetDBModel(db_args)
+        self.model = DBModel(params['model_config'])
+        # db_args = {'out_channels': 2,
+                   # 'k': 50}
+        # self.model = HRNetDBModel(db_args)
         self.post_processing = SegDetectorRepresenter(thresh=params['thresh'],
                                                       box_thresh=params['box_thresh'],
                                                       max_candidates=params['max_candidates'],
@@ -79,7 +79,7 @@ class OnePredict(object):
 
     def resume(self):
         self.model = nn.DataParallel(self.model)
-        self.model.load_state_dict(torch.load(self.model_path, map_location=self.device), strict=True)
+        # self.model.load_state_dict(torch.load(self.model_path, map_location=self.device), strict=True)
         self.model.to(self.device)
 
     def format_output(self, batch, output):
@@ -129,7 +129,7 @@ class OnePredict(object):
 
         return pred_canvas
 
-    def inference(self, img_path, is_resize=False, is_visualize=True, is_format_output=False):
+    def inference(self, img_path, is_resize=True, is_visualize=True, is_format_output=False):
         img = cv2.imread(img_path)
 
         img = cv2.cvtColor(img, cv2.COLOR_BGR2RGB)
@@ -139,7 +139,10 @@ class OnePredict(object):
             scale = self.params['short_size'] / min(h, w)
             img = cv2.resize(img, None, fx=scale, fy=scale)
 
+        print('before transform', img)
         tensor = self.transform(img)
+        print('after transform', tensor)
+
         tensor = tensor.unsqueeze_(0)
 
         tensor = tensor.to(self.device)
@@ -150,9 +153,10 @@ class OnePredict(object):
         batch['image'] = tensor
 
         with torch.no_grad():
-            # print('tensor', tensor.shape)
+            print(tensor.size())
+            print('tensor', tensor)
             preds = self.model(tensor)
-            # print(preds)
+            print(preds)
 
             outputs = self.post_processing.represent(batch=batch, pred=preds, is_output_polygon=self.params['polygon'])
 
@@ -180,7 +184,7 @@ if __name__ == '__main__':
 
     params = dict()
     params['polygon'] = False
-    params['short_size'] = 1152
+    params['short_size'] = 736
     params['result_dir'] = 'images_result/'
     params['transform'] = [{'type': 'ToTensor', 'args': {}},
                            {'type': 'Normalize', 'args': {'mean': [0.485, 0.456, 0.406], 'std': [0.229, 0.224, 0.225]}}]
@@ -195,7 +199,7 @@ if __name__ == '__main__':
     params['max_candidates'] = 1000
 
     params['unclip_ratio'] = 1.5
-    params['model_path'] = 'model_save/db_icdar_model_1100.pth'
+    params['model_path'] = 'model_save/db_icdar_model_final.pth'
 
     img_demo_path = "images_result/"
     img_predict = OnePredict(params)
@@ -204,16 +208,18 @@ if __name__ == '__main__':
     #     img_path='/home/shizai/data2/ocr_data/icdar2015/test/imgs/img_500.jpg',
     #     is_visualize=True, is_format_output=False)
     # print(outputs)
-    img_eval_path = '/home/shizai/data2/ocr_data/icdar2015/test/imgs/'
-    img_eval_res = '/home/shizai/data2/ocr_data/icdar2015/test/submit/'
+    img_eval_path = '/home/shizai/data2/ocr_data/icdar2015/train/imgs/'
+    img_eval_res = '/home/shizai/data2/ocr_data/icdar2015/train/submit/'
     params['result_dir'] = img_eval_res
 
     i = 0
     for img_name in os.listdir(img_eval_path):
         print(i)
         s1 = time.time()
+        img_name = 'img_363.jpg'
         outputs = img_predict.inference(
             img_path=os.path.join(img_eval_path, img_name),
-            is_visualize=False, is_format_output=True)
+            is_visualize=True, is_format_output=False)
         # print('cost time:', time.time() - s1)
+        break
         i += 1

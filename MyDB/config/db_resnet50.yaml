@@ -1,23 +1,23 @@
 root_path:
   image_path: "/home/shizai/data2/ocr_data/icdar2015/train/"
-  eval_path: "/home/shizai/data2/ocr_data/icdar2015/test/"
+  eval_path: "/home/shizai/data2/ocr_data/china_life_test_data"
   weight: "./weights/"
   pretrained_model: ""
   result_dir: "images_result/"
   model_path: "./weights/DB_final.pth"
 data:
   process:
-#    - type: IaaAugment
-#      args:
-#        - type: Fliplr
-#          args:
-#            p: 0.5
-#        - type: Affine
-#          args:
-#            rotate: [-10,10]
-#        - type: Resize
-#          args:
-#            size: [0.5,3]
+    - type: IaaAugment
+      args:
+        - type: Fliplr
+          args:
+            p: 0.5
+        - type: Affine
+          args:
+            rotate: [-10,10]
+        - type: Resize
+          args:
+            size: [0.5,3]
     - type: EastRandomCropData
       args:
         size:
@@ -31,8 +31,10 @@ data:
     - type: MakeShrinkMap
       args:
         shrink_ratio: 0.4
+        min_text_size: 8
   transforms:
     - type: ToTensor
+      args: {}
     - type: Normalize
       args:
         mean: [0.485, 0.456, 0.406]
@@ -41,19 +43,19 @@ data:
   ignore_tags: ['*', '###']
 model_define:
 pretrained:
-  pretrained_backbone: False
+  pretrained_backbone: True
   pretrained_model: False
 train_params:
-  batch_size: 8
-  epochs: 100
-  lr: 1.0e-4
-  workers: 0
+  batch_size: 16
+  epochs: 1200
+  lr: 1.0e-3
+  workers: 32
   DateParallel: False
 inference_params:
   polygon: False
   short_size: 736
-  thresh: 0.2
-  box_thresh: 0.55
+  thresh: 0.25
+  box_thresh: 0.1
   max_candidates: 1000
   unclip_ratio: 1.5
 
