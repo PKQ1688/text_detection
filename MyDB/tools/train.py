@@ -211,6 +211,7 @@ class Train(object):
         self.model.train()
         loss_train = []
         one_epoch_use_time = 0
+        one_epoch_data_process_use_time = 0
         for i, data in enumerate(self.loader_train):
             # img, targets = self.train_prefetcher.next()
             # i = 0
@@ -218,6 +219,8 @@ class Train(object):
             #     i += 1
 
             self.scheduler(self.optimizer, i, epoch, self.best_val_loss)
+            # with torch.autograd.profiler.profile(enabled=True, use_cuda=False) as profile:
+            data_process_start_time = time.time()
 
             img, targets = data
             img = img.to(self.device)
@@ -229,7 +232,15 @@ class Train(object):
                     if isinstance(value, torch.Tensor):
                         targets[key] = value.to(self.device)
 
+            data_process_end_time = time.time()
+            one_epoch_data_process_use_time += data_process_end_time - data_process_start_time
+            # print('data_process time:', profile)
+
+            # with torch.autograd.profiler.profile(enabled=True, use_cuda=True) as profile:
+
+            torch.cuda.synchronize()
             train_start_time = time.time()
+
             y_pred = self.model(img)
             # print('1111', y_pred.size())
             # print('2222', y_true.size())
@@ -240,16 +251,21 @@ class Train(object):
             self.optimizer.zero_grad()
             loss.backward()
             self.optimizer.step()
+
+            torch.cuda.synchronize()
             train_end_time = time.time()
             one_epoch_use_time += train_end_time - train_start_time
+            # print('train_use time', profile)
+
             # lr_scheduler.step()
-            if self.step % 10 == 0:
+            if self.step % 50 == 0:
                 print('Epoch:[{}/{}]\t iter:[{}]\t loss={:.5f}\t lr={}'
                       .format(epoch, self.epochs, i, loss, self.optimizer.param_groups[0]['lr']))
 
             self.step += 1
             # img, targets = self.train_prefetcher.next()
         print("Epoch [{}] train use time:[{:.2f}]".format(epoch, one_epoch_use_time))
+        print("Epoch [{}] data_process use time:[{:.2f}]".format(epoch, one_epoch_data_process_use_time))
 
     def val_model(self, epoch=0):
         self.model.eval()
@@ -323,7 +339,7 @@ class Train(object):
 if __name__ == '__main__':
     import yaml
 
-    os.environ["CUDA_VISIBLE_DEVICES"] = "3"
+    os.environ["CUDA_VISIBLE_DEVICES"] = "3,6"
 
     with open('config/db_resnet50.yaml', 'r') as fp:
         config = yaml.load(fp.read(), Loader=yaml.FullLoader)

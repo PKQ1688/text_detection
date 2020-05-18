@@ -46,16 +46,16 @@ pretrained:
   pretrained_backbone: True
   pretrained_model: False
 train_params:
-  batch_size: 16
+  batch_size: 32
   epochs: 1200
   lr: 1.0e-3
   workers: 32
-  DateParallel: False
+  DateParallel: True
 inference_params:
   polygon: False
   short_size: 736
-  thresh: 0.25
-  box_thresh: 0.1
+  thresh: 0.3
+  box_thresh: 0.7
   max_candidates: 1000
   unclip_ratio: 1.5
 

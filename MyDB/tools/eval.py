@@ -42,6 +42,6 @@ class EvalChinaLife(object):
 
 
 if __name__ == '__main__':
-    os.environ['CUDA_VISIBLE_DEVICES'] = "1"
+    os.environ['CUDA_VISIBLE_DEVICES'] = "6"
     eval_path = '/home/shizai/data2/ocr_data/icdar2015/test/'
-    _, _, hmean = EvalChinaLife(eval_path).main()
+    _, _, hmean = EvalChinaLife(eval_path, use_model='weights/DB_611_0.21.pth').main()

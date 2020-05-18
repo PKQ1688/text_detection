@@ -156,9 +156,9 @@ class OnePredict(object):
             scale = self.short_size / min(h, w)
             img = cv2.resize(img, None, fx=scale, fy=scale)
 
-        print('before transform', img)
+        # print('before transform', img)
         tensor = self.transform(img)
-        print('after transform', tensor)
+        # print('after transform', tensor)
         tensor = tensor.unsqueeze_(0)
 
         tensor = tensor.to(self.device)
@@ -169,12 +169,12 @@ class OnePredict(object):
         batch['image'] = tensor
 
         with torch.no_grad():
-            print(tensor.size())
-            print('tensor', tensor)
+            # print(tensor.size())
+            # print('tensor', tensor)
             preds = self.model(tensor)
-            print(111, preds)
+            # print(111, preds)
 
-            self.my_post_process(preds)
+            # self.my_post_process(preds)
             outputs = self.post_processing.represent(batch=batch, pred=preds, is_output_polygon=self.polygon)
 
             # print('output', outputs)
@@ -201,13 +201,13 @@ class OnePredict(object):
 if __name__ == '__main__':
     import yaml
 
-    os.environ['CUDA_VISIBLE_DEVICES'] = "2"
+    os.environ['CUDA_VISIBLE_DEVICES'] = "6"
 
-    img_path = "/home/shizai/data2/ocr_data/icdar2015/train/imgs/img_251.jpg"
+    img_path = "/home/shizai/data2/ocr_data/icdar2015/test/imgs/img_251.jpg"
     # img_path = 'test_imgs/1.jpg'
     with open('config/db_resnet50.yaml', 'r') as fp:
         config = yaml.load(fp.read(), Loader=yaml.FullLoader)
-    img_predict = OnePredict(configs=config, use_model='weights/DB_final.pth')
+    img_predict = OnePredict(configs=config, use_model='weights/DB_517_0.22.pth')
     outputs = img_predict.inference(
         img_path=img_path, is_resize=False,
         is_visualize=True, is_format_output=False)
