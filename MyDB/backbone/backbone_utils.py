@@ -54,7 +54,6 @@ def resnet_fpn_backbone(backbone_name, pretrained):
             parameter.requires_grad_(False)
 
     return_layers = {'layer1': '0', 'layer2': '1', 'layer3': '2', 'layer4': '3'}
-
     in_channels_stage2 = backbone.inplanes // 8
     in_channels_list = [
         in_channels_stage2,
@@ -64,3 +63,12 @@ def resnet_fpn_backbone(backbone_name, pretrained):
     ]
     out_channels = 256
     return BackboneWithFPN(backbone, return_layers, in_channels_list, out_channels)
+
+
+if __name__ == '__main__':
+    import torch
+
+    x = torch.zeros(1, 3, 640, 640)
+    backbone = resnet_fpn_backbone(backbone_name='resnet18', pretrained=False)
+    y = backbone(x)
+    print(y.keys())

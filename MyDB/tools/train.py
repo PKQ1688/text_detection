@@ -18,6 +18,7 @@ from utils import lr_scheduler
 from tqdm import tqdm
 
 from tools.eval import EvalChinaLife
+from torch.utils.tensorboard import SummaryWriter
 
 from prefetch_generator import BackgroundGenerator
 import numpy as np
@@ -115,6 +116,9 @@ class Train(object):
         else:
             os.mkdir(self.weights)
 
+        log_save_path = config['root_path']['log_path']
+        self.writer = SummaryWriter(log_save_path)
+
         pre_train = configs['pretrained']['pretrained_model']
         pre_train_backbone = configs['pretrained']['pretrained_backbone']
 
@@ -128,10 +132,12 @@ class Train(object):
         if is_multi_gpu:
             self.model = nn.DataParallel(self.model)
 
+        # print(self.device)
         self.model.to(self.device)
 
         # self.best_hmean = 0.0
         self.best_val_loss = 999
+        self.best_hmean = 0.0
 
         # self.loader_train, self.loader_valid, self.train_prefetcher, self.valid_prefetcher = self.data_loaders()
         self.loader_train, self.loader_valid = self.data_loaders()
@@ -220,7 +226,7 @@ class Train(object):
 
             self.scheduler(self.optimizer, i, epoch, self.best_val_loss)
             # with torch.autograd.profiler.profile(enabled=True, use_cuda=False) as profile:
-            data_process_start_time = time.time()
+            data_process_start_time = time.perf_counter()
 
             img, targets = data
             img = img.to(self.device)
@@ -232,16 +238,21 @@ class Train(object):
                     if isinstance(value, torch.Tensor):
                         targets[key] = value.to(self.device)
 
-            data_process_end_time = time.time()
+            data_process_end_time = time.perf_counter()
             one_epoch_data_process_use_time += data_process_end_time - data_process_start_time
             # print('data_process time:', profile)
 
             # with torch.autograd.profiler.profile(enabled=True, use_cuda=True) as profile:
 
             torch.cuda.synchronize()
-            train_start_time = time.time()
+            train_start_time = time.perf_counter()
 
             y_pred = self.model(img)
+
+            torch.cuda.synchronize()
+            train_end_time = time.perf_counter()
+            one_epoch_use_time += train_end_time - train_start_time
+
             # print('1111', y_pred.size())
             # print('2222', y_true.size())
             loss_dict = self.criterion(y_pred, targets)
@@ -252,15 +263,19 @@ class Train(object):
             loss.backward()
             self.optimizer.step()
 
-            torch.cuda.synchronize()
-            train_end_time = time.time()
-            one_epoch_use_time += train_end_time - train_start_time
             # print('train_use time', profile)
 
             # lr_scheduler.step()
             if self.step % 50 == 0:
                 print('Epoch:[{}/{}]\t iter:[{}]\t loss={:.5f}\t lr={}'
                       .format(epoch, self.epochs, i, loss, self.optimizer.param_groups[0]['lr']))
+                self.writer.add_scalar('training loss:',
+                                       loss,
+                                       epoch * len(self.loader_train) + i)
+
+                self.writer.add_scalar('learning_rate:',
+                                       self.optimizer.param_groups[0]['lr'],
+                                       epoch * len(self.loader_train) + i)
 
             self.step += 1
             # img, targets = self.train_prefetcher.next()
@@ -303,6 +318,11 @@ class Train(object):
 
         loss_mean = np.mean(np.array(loss_val))
         print('mean val loss:{:.5f}'.format(loss_mean))
+
+        self.writer.add_scalar('validation loss',
+                               loss_mean,
+                               epoch)
+
         if loss_mean < self.best_val_loss:
             self.best_val_loss = loss_mean
             self.patience = 0
@@ -320,10 +340,10 @@ class Train(object):
             print("Epoch [{}] all use time:[{:.2f}]".format(epoch, epoch_end_time - epoch_start_time))
             # self.lr_scheduler.step()
             self.val_model(epoch)
-            # if self.patience > 50:
-            #     break
+            # if self.patience > 20:
+            # break
 
-            # if epoch % 2 == 1:
+            # if epoch % 5 == 0:
             #     use_model = os.path.join(self.weights, "DB_{}.pth".format(epoch))
             #     print(use_model)
             #     torch.save(self.model.state_dict(), use_model)
@@ -335,14 +355,46 @@ class Train(object):
 
         torch.save(self.model.state_dict(), os.path.join(self.weights, "DB_final.pth"))
 
+    @staticmethod
+    def matplotlib_imshow(img, one_channel=False):
+        import matplotlib.pyplot as plt
+        if one_channel:
+            img = img.mean(dim=0)
+        img = img / 2 + 0.5  # unnormalize
+        npimg = img.numpy()
+        if one_channel:
+            plt.imshow(npimg, cmap="Greys")
+        else:
+            plt.imshow(np.transpose(npimg, (1, 2, 0)))
+
+    def test_tensorboard(self):
+        # import torchvision
+
+        dataiter = iter(self.loader_valid)
+        img, targets = dataiter.next()
+
+        # img = img.to(self.device)
+        # img = img[0]
+        # print(img.size())
+        #
+        # img_grid = torchvision.utils.make_grid(img)
+        # self.matplotlib_imshow(img_grid, one_channel=False)
+        #
+        # self.writer.add_image('test_xxx', img_grid)
+
+        model = self.model.cpu()
+        self.writer.add_graph(model, img)
+        self.writer.close()
+
 
 if __name__ == '__main__':
     import yaml
 
-    os.environ["CUDA_VISIBLE_DEVICES"] = "3,6"
+    os.environ["CUDA_VISIBLE_DEVICES"] = "5"
 
     with open('config/db_resnet50.yaml', 'r') as fp:
         config = yaml.load(fp.read(), Loader=yaml.FullLoader)
 
     trainer = Train(configs=config)
     trainer.main()
+    # trainer.test_tensorboard()

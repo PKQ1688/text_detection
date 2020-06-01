@@ -201,13 +201,12 @@ class OnePredict(object):
 if __name__ == '__main__':
     import yaml
 
-    os.environ['CUDA_VISIBLE_DEVICES'] = "6"
-
-    img_path = "/home/shizai/data2/ocr_data/icdar2015/test/imgs/img_251.jpg"
-    # img_path = 'test_imgs/1.jpg'
+    os.environ['CUDA_VISIBLE_DEVICES'] = "1"
+    # img_path = "/home/shizai/data2/ocr_data/china_life_test_data/imgs/img_33.jpg"
+    img_path = 'test_imgs/4.png'
     with open('config/db_resnet50.yaml', 'r') as fp:
         config = yaml.load(fp.read(), Loader=yaml.FullLoader)
-    img_predict = OnePredict(configs=config, use_model='weights/DB_517_0.22.pth')
+    img_predict = OnePredict(configs=config, use_model='weights/DB_final.pth')
     outputs = img_predict.inference(
         img_path=img_path, is_resize=False,
         is_visualize=True, is_format_output=False)

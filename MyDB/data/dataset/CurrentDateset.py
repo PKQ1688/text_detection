@@ -45,41 +45,41 @@ class CurrentOcrData(object):
         # print(self.imgs)
         self.init_pre_process()
         # print(self.aug)
-        self.targets = list()
-        for img_name in tqdm(self.patients):
-            img_path = os.path.join(self.root, 'imgs', img_name)
-            gt_name = 'gt_' + img_name.replace('png', 'txt').replace('jpg', 'txt').replace('jpeg', 'txt')
-            gt_path = os.path.join(self.root, 'gts', gt_name)
-
-            img = cv2.imread(img_path)
-            img = cv2.cvtColor(img, cv2.COLOR_BGR2RGB)
-
-            one_targets = self.get_annotation(gt_path)
-            one_targets['img'] = img
-            one_targets['shape'] = [img.shape[0], img.shape[1]]
-
-            self.targets.append(one_targets)
+        # self.targets = list()
+        # for img_name in tqdm(self.patients):
+        #     img_path = os.path.join(self.root, 'imgs', img_name)
+        #     gt_name = 'gt_' + img_name.replace('png', 'txt').replace('jpg', 'txt').replace('jpeg', 'txt')
+        #     gt_path = os.path.join(self.root, 'gts', gt_name)
+        #
+        #     img = cv2.imread(img_path)
+        #     img = cv2.cvtColor(img, cv2.COLOR_BGR2RGB)
+        #
+        #     one_targets = self.get_annotation(gt_path)
+        #     one_targets['img'] = img
+        #     one_targets['shape'] = [img.shape[0], img.shape[1]]
+        #
+        #     self.targets.append(one_targets)
 
     def __len__(self):
         return len(self.patients)  # - 1
 
     def __getitem__(self, item):
         # s1 = time.time()
-        # img_path = os.path.join(self.root, 'imgs', self.patients[item])
-        # gt_name = self.patients[item].replace('png', 'txt').replace('jpg', 'txt').replace('jpeg', 'txt')
-        # gt_path = os.path.join(self.root, 'gts', gt_name)
-        #
-        # img = cv2.imread(img_path)
-        # img = cv2.cvtColor(img, cv2.COLOR_BGR2RGB)
-        # # e_5 = time.time()
-        # # print('read img time:', e_5 - s1)
-        #
-        # one_targets = self.get_annotation(gt_path)
-        # one_targets['img'] = img
-        # one_targets['shape'] = [img.shape[0], img.shape[1]]
+        img_path = os.path.join(self.root, 'imgs', self.patients[item])
+        gt_name = self.patients[item].replace('png', 'txt').replace('jpg', 'txt').replace('jpeg', 'txt')
+        gt_path = os.path.join(self.root, 'gts', gt_name)
 
-        # targets = one_targets
-        targets = self.targets[item]
+        img = cv2.imread(img_path)
+        img = cv2.cvtColor(img, cv2.COLOR_BGR2RGB)
+        # e_5 = time.time()
+        # print('read img time:', e_5 - s1)
+
+        one_targets = self.get_annotation(gt_path)
+        one_targets['img'] = img
+        one_targets['shape'] = [img.shape[0], img.shape[1]]
+        #
+        targets = one_targets
+        # targets = self.targets[item]
         # s2 = time.time()
         if self.is_training:
             targets = self.apply_pre_process(targets)
@@ -186,7 +186,7 @@ if __name__ == '__main__':
         return tr_list
 
 
-    image_path = '/home/shizai/data2/ocr_data/icdar2015/'
+    image_path = '/home/shizai/data2/ocr_data/rctw'
 
     pre_processes = configs['data']['process']
     transforms_config = configs['data']['transforms']
@@ -202,10 +202,10 @@ if __name__ == '__main__':
                                     is_training=True)
     loader_train = DataLoader(
         train_datasets,
-        batch_size=1,
+        batch_size=16,
         shuffle=True,
         drop_last=False,
-        num_workers=0,
+        num_workers=32,
         pin_memory=False
     )
     # for i in range(1000):

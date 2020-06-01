@@ -60,7 +60,7 @@ def get_annotation(gt_path, ignore_tags=['*', '###']):
 
 def make_use_label(file_path, img_name):
     img_path = os.path.join(file_path, 'imgs', img_name)
-    gt_name = img_name.replace('png', 'txt').replace('jpg', 'txt').replace('jpeg', 'txt')
+    gt_name = 'gt_' + img_name.replace('png', 'txt').replace('jpg', 'txt').replace('jpeg', 'txt')
     gt_path = os.path.join(file_path, 'gts', gt_name)
 
     data = get_annotation(gt_path)
@@ -82,13 +82,19 @@ def make_use_label(file_path, img_name):
 rctw_path = "/home/shizai/data2/ocr_data/rctw"
 rctw_list = os.listdir(os.path.join(rctw_path, 'imgs'))
 
-print('begin...')
-for rctw_img in rctw_list:
-    make_use_label(rctw_path, rctw_img)
+# print('begin...')
+# for rctw_img in rctw_list:
+#     make_use_label(rctw_path, rctw_img)
+#
+# third_path = "/home/shizai/data2/ocr_data/third_data"
+# third_list = os.listdir(os.path.join(third_path, 'imgs'))
+#
+# for third_img in third_list:
+#     make_use_label(third_path, third_img)
+# print('end...')
 
-third_path = "/home/shizai/data2/ocr_data/third_data"
-third_list = os.listdir(os.path.join(third_path, 'imgs'))
+icdar_path = "/home/shizai/data2/ocr_data/icdar2015/train/"
+icdar_list = os.listdir(os.path.join(icdar_path, 'imgs'))
 
-for third_img in third_list:
-    make_use_label(third_path, third_img)
-print('end...')
+for icdar_img in icdar_list:
+    make_use_label(icdar_path, icdar_img)
