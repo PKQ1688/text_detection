@@ -10,6 +10,8 @@ from tqdm import tqdm
 from torchvision import transforms as T
 import time
 
+import random
+
 cv2.setNumThreads(0)
 
 
@@ -28,9 +30,13 @@ class CurrentOcrData(object):
         self.aug = list()
 
         self.patients = list(sorted(os.listdir(os.path.join(root, "imgs"))))
+
         # self.imgs = self.imgs[:30]
         # self.gts = list(sorted(os.listdir(os.path.join(root, "gts"))))
         # self.gts = self.gts[:30]
+        random.shuffle(self.patients)
+        self.patients = self.patients[:100]
+
         validation_cases = int(0.1 * len(self.patients))
         #
         validation_patients = random.sample(self.patients, k=validation_cases)

@@ -147,7 +147,7 @@ class Train(object):
         self.optimizer = optim.Adam(self.params, lr=self.lr, weight_decay=0.0005)
         # self.optimizer = torch.optim.SGD(self.params, lr=self.lr, momentum=0.9, weight_decay=0.0005)
 
-        self.scheduler = lr_scheduler.LR_Scheduler_Head(mode='poly',
+        self.scheduler = lr_scheduler.LR_Scheduler_Head(mode='cos',
                                                         base_lr=self.lr,
                                                         num_epochs=self.epochs,
                                                         iters_per_epoch=len(self.loader_train),
@@ -266,7 +266,7 @@ class Train(object):
             # print('train_use time', profile)
 
             # lr_scheduler.step()
-            if self.step % 50 == 0:
+            if self.step % 5 == 0:
                 print('Epoch:[{}/{}]\t iter:[{}]\t loss={:.5f}\t lr={}'
                       .format(epoch, self.epochs, i, loss, self.optimizer.param_groups[0]['lr']))
                 self.writer.add_scalar('training loss:',
@@ -390,7 +390,7 @@ class Train(object):
 if __name__ == '__main__':
     import yaml
 
-    os.environ["CUDA_VISIBLE_DEVICES"] = "5"
+    os.environ["CUDA_VISIBLE_DEVICES"] = "1"
 
     with open('config/db_resnet50.yaml', 'r') as fp:
         config = yaml.load(fp.read(), Loader=yaml.FullLoader)

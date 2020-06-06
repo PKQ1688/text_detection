@@ -45,19 +45,19 @@ data:
   ignore_tags: ['*', '###']
 model_define:
 pretrained:
-  pretrained_backbone: False
-  pretrained_model: True
+  pretrained_backbone: True
+  pretrained_model: False
 train_params:
   batch_size: 16
-  epochs: 400
+  epochs: 600
   lr: 1.0e-4
   workers: 8
   DateParallel: False
 inference_params:
   polygon: False
   short_size: 2400
-  thresh: 0.3
-  box_thresh: 0.7
+  thresh: 0.1
+  box_thresh: 0.05
   max_candidates: 1000
   unclip_ratio: 1.5
 

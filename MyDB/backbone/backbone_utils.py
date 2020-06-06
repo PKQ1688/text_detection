@@ -7,6 +7,7 @@ from backbone.utils import IntermediateLayerGetter
 from torchvision.ops import misc as misc_nn_ops
 
 from backbone import resnet_v2 as resnet
+from backbone.MobileNetV3 import MobileNetV3_Small as mobilenet
 
 
 class BackboneWithFPN(nn.Module):
@@ -48,6 +49,8 @@ def resnet_fpn_backbone(backbone_name, pretrained):
     backbone = resnet.__dict__[backbone_name](
         pretrained=pretrained,
         norm_layer=misc_nn_ops.FrozenBatchNorm2d)
+
+    # print(backbone)
     # freeze layers
     for name, parameter in backbone.named_parameters():
         if 'layer2' not in name and 'layer3' not in name and 'layer4' not in name:
@@ -65,6 +68,12 @@ def resnet_fpn_backbone(backbone_name, pretrained):
     return BackboneWithFPN(backbone, return_layers, in_channels_list, out_channels)
 
 
+def mobile_fpn_backbone(pretrained):
+    backbone = mobilenet()
+    print(backbone)
+    return 0
+
+
 if __name__ == '__main__':
     import torch
 
@@ -72,3 +81,4 @@ if __name__ == '__main__':
     backbone = resnet_fpn_backbone(backbone_name='resnet18', pretrained=False)
     y = backbone(x)
     print(y.keys())
+    # print(mobile_fpn_backbone(x))
