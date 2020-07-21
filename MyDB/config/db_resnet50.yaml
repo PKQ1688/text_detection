@@ -1,10 +1,11 @@
 root_path:
-  image_path: "/home/shizai/data2/ocr_data/real_doc/"
+#  image_path: "/home/shizai/data2/ocr_data/real_doc/"
+  image_path: "/home/shizai/data2/ocr_data/rctw"
   #  eval_path: "/home/shizai/data2/ocr_data/icdar2015/test/"
   eval_path: "/home/shizai/data2/ocr_data/china_life_test_data"
   weight: "./weights/"
   pretrained_model: "model_use_weights/DB_257_0.26.pth"
-  log_path: "log_dir/db_train"
+  log_path: "log_dir/"
   result_dir: "images_result/"
   model_path: "./weights/DB_final.pth"
 data:
@@ -49,15 +50,15 @@ pretrained:
   pretrained_model: False
 train_params:
   batch_size: 16
-  epochs: 600
-  lr: 1.0e-4
-  workers: 8
+  epochs: 1200
+  lr: 1.0e-3
+  workers: 16
   DateParallel: False
 inference_params:
   polygon: False
-  short_size: 2400
-  thresh: 0.1
-  box_thresh: 0.05
+  short_size: 1200
+  thresh: 0.3
+  box_thresh: 0.7
   max_candidates: 1000
   unclip_ratio: 1.5
 

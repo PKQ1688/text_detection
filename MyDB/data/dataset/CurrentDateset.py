@@ -20,6 +20,7 @@ cv2.setNumThreads(0)
 
 class CurrentOcrData(object):
     def __init__(self, root, pre_processes=None, transforms=None, filter_keys=None, ignore_tags=None, is_training=True):
+        # random.seed(69)
         self.is_training = is_training
         self.root = root
         self.transforms = transforms
@@ -35,7 +36,7 @@ class CurrentOcrData(object):
         # self.gts = list(sorted(os.listdir(os.path.join(root, "gts"))))
         # self.gts = self.gts[:30]
         random.shuffle(self.patients)
-        self.patients = self.patients[:100]
+        # self.patients = self.patients[:10]
 
         validation_cases = int(0.1 * len(self.patients))
         #
@@ -71,60 +72,120 @@ class CurrentOcrData(object):
 
     def __getitem__(self, item):
         # s1 = time.time()
-        img_path = os.path.join(self.root, 'imgs', self.patients[item])
-        gt_name = self.patients[item].replace('png', 'txt').replace('jpg', 'txt').replace('jpeg', 'txt')
-        gt_path = os.path.join(self.root, 'gts', gt_name)
+        try:
+            img_path = os.path.join(self.root, 'imgs', self.patients[item])
+            gt_name = self.patients[item].replace('png', 'txt').replace('jpg', 'txt').replace('jpeg', 'txt')
+            gt_path = os.path.join(self.root, 'gts', gt_name)
 
-        img = cv2.imread(img_path)
-        img = cv2.cvtColor(img, cv2.COLOR_BGR2RGB)
-        # e_5 = time.time()
-        # print('read img time:', e_5 - s1)
+            img = cv2.imread(img_path)
+            img = cv2.cvtColor(img, cv2.COLOR_BGR2RGB)
+            # e_5 = time.time()
+            # print('read img time:', e_5 - s1)
 
-        one_targets = self.get_annotation(gt_path)
-        one_targets['img'] = img
-        one_targets['shape'] = [img.shape[0], img.shape[1]]
-        #
-        targets = one_targets
-        # targets = self.targets[item]
-        # s2 = time.time()
-        if self.is_training:
-            targets = self.apply_pre_process(targets)
-            # e2 = time.time()
-            # print('aug use time:', e2 - s2)
-        else:
-            val_aug = list()
-            for aug in self.pre_processes:
-                if aug['type'] not in ['MakeBorderMap', 'MakeShrinkMap']:
-                    continue
-                if 'args' not in aug:
-                    args = {}
-                else:
-                    args = aug['args']
-                if isinstance(args, dict):
-                    cls = eval(aug['type'])(**args)
-                else:
-                    cls = eval(aug['type'])(args)
-                val_aug.append(cls)
-            for aug in val_aug:
-                targets = aug(targets)
+            one_targets = self.get_annotation(gt_path)
+            one_targets['img'] = img
+            one_targets['shape'] = [img.shape[0], img.shape[1]]
+            #
+            targets = one_targets
+            # targets = self.targets[item]
+            # s2 = time.time()
+            if self.is_training:
+                targets = self.apply_pre_process(targets)
+                # e2 = time.time()
+                # print('aug use time:', e2 - s2)
+            else:
+                val_aug = list()
+                for aug in self.pre_processes:
+                    if aug['type'] not in ['MakeBorderMap', 'MakeShrinkMap']:
+                        continue
+                    if 'args' not in aug:
+                        args = {}
+                    else:
+                        args = aug['args']
+                    if isinstance(args, dict):
+                        cls = eval(aug['type'])(**args)
+                    else:
+                        cls = eval(aug['type'])(args)
+                    val_aug.append(cls)
+                for aug in val_aug:
+                    targets = aug(targets)
 
-        # s3 = time.time()
-        if self.transforms is not None:
-            targets['img'] = self.transforms(targets['img'])
+            # s3 = time.time()
+            if self.transforms is not None:
+                targets['img'] = self.transforms(targets['img'])
 
-        targets['text_polys'] = targets['text_polys'].tolist()
-        # e3 = time.time()
-        # print('transforms time:', e3 - s3)
-        if self.filter_key is not None and self.is_training:
-            targets_dict = dict()
-            for k, v in targets.items():
-                if k not in self.filter_key:
-                    targets_dict[k] = v
-            # end_time = time.time()
-            # print('train one image use time:', end_time - s1)
-            return targets['img'], targets_dict
-        else:
-            return targets['img'], targets
+            targets['text_polys'] = targets['text_polys'].tolist()
+            # e3 = time.time()
+            # print('transforms time:', e3 - s3)
+            if self.filter_key is not None and self.is_training:
+                targets_dict = dict()
+                for k, v in targets.items():
+                    if k not in self.filter_key:
+                        targets_dict[k] = v
+                # end_time = time.time()
+                # print('train one image use time:', end_time - s1)
+                return targets['img'], targets_dict
+            else:
+                return targets['img'], targets
+        except Exception as e:
+            print(e)
+            print(self.patients[item])
+            item = 0
+            img_path = os.path.join(self.root, 'imgs', self.patients[item])
+            gt_name = self.patients[item].replace('png', 'txt').replace('jpg', 'txt').replace('jpeg', 'txt')
+            gt_path = os.path.join(self.root, 'gts', gt_name)
+
+            img = cv2.imread(img_path)
+            img = cv2.cvtColor(img, cv2.COLOR_BGR2RGB)
+            # e_5 = time.time()
+            # print('read img time:', e_5 - s1)
+
+            one_targets = self.get_annotation(gt_path)
+            one_targets['img'] = img
+            one_targets['shape'] = [img.shape[0], img.shape[1]]
+            #
+            targets = one_targets
+            # targets = self.targets[item]
+            # s2 = time.time()
+            if self.is_training:
+                targets = self.apply_pre_process(targets)
+                # e2 = time.time()
+                # print('aug use time:', e2 - s2)
+            else:
+                val_aug = list()
+                for aug in self.pre_processes:
+                    if aug['type'] not in ['MakeBorderMap', 'MakeShrinkMap']:
+                        continue
+                    if 'args' not in aug:
+                        args = {}
+                    else:
+                        args = aug['args']
+                    if isinstance(args, dict):
+                        cls = eval(aug['type'])(**args)
+                    else:
+                        cls = eval(aug['type'])(args)
+                    val_aug.append(cls)
+                for aug in val_aug:
+                    targets = aug(targets)
+
+            # s3 = time.time()
+            if self.transforms is not None:
+                targets['img'] = self.transforms(targets['img'])
+
+            targets['text_polys'] = targets['text_polys'].tolist()
+            # e3 = time.time()
+            # print('transforms time:', e3 - s3)
+            if self.filter_key is not None and self.is_training:
+                targets_dict = dict()
+                for k, v in targets.items():
+                    if k not in self.filter_key:
+                        targets_dict[k] = v
+                # end_time = time.time()
+                # print('train one image use time:', end_time - s1)
+                return targets['img'], targets_dict
+            else:
+                return targets['img'], targets
+
 
     def get_annotation(self, gt_path):
         boxes = list()

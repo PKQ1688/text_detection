@@ -42,6 +42,6 @@ class EvalChinaLife(object):
 
 
 if __name__ == '__main__':
-    os.environ['CUDA_VISIBLE_DEVICES'] = "1"
+    os.environ['CUDA_VISIBLE_DEVICES'] = "3"
     eval_path = '/home/shizai/data2/ocr_data/china_life_test_data/'
     _, _, hmean = EvalChinaLife(eval_path, use_model='weights/DB_final.pth').main()

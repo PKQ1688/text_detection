@@ -2,12 +2,11 @@
 # @author :adolf
 import torch.nn as nn
 from torchvision.ops.feature_pyramid_network import FeaturePyramidNetwork, LastLevelMaxPool
-from backbone.utils import IntermediateLayerGetter
+from Model.backbone.utils import IntermediateLayerGetter
 
 from torchvision.ops import misc as misc_nn_ops
 
-from backbone import resnet_v2 as resnet
-from backbone.MobileNetV3 import MobileNetV3_Small as mobilenet
+from Model.backbone import resnet as resnet
 
 
 class BackboneWithFPN(nn.Module):

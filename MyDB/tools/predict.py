@@ -52,6 +52,7 @@ class OnePredict(object):
 
         self.short_size = configs['inference_params']['short_size']
 
+        print(self.device)
     def init_torch_tensor(self):
         torch.set_default_tensor_type('torch.FloatTensor')
         if torch.cuda.is_available():
@@ -84,7 +85,7 @@ class OnePredict(object):
         boxes, _ = output
         boxes = boxes[0]
         original_image = cv2.imread(image_path, cv2.IMREAD_COLOR)
-        original_image = cv2.resize(original_image, None, fx=0.3, fy=0.3, interpolation=cv2.INTER_CUBIC)
+        # original_image = cv2.resize(original_image, None, fx=0.3, fy=0.3, interpolation=cv2.INTER_CUBIC)
         original_shape = original_image.shape
         pred_canvas = original_image.copy().astype(np.uint8)
         pred_canvas = cv2.resize(pred_canvas, (original_shape[1], original_shape[0]))
@@ -149,12 +150,12 @@ class OnePredict(object):
         img = cv2.imread(img_path)
 
         # print('1111', img.shape)
-        img = cv2.resize(img, None, fx=0.3, fy=0.3, interpolation=cv2.INTER_CUBIC)
+        # img = cv2.resize(img, None, fx=0.3, fy=0.3, interpolation=cv2.INTER_CUBIC)
 
         img = cv2.cvtColor(img, cv2.COLOR_BGR2RGB)
 
         h, w = img.shape[:2]
-        print(h, w)
+        # print(h, w)
         if is_resize:
             scale = self.short_size / min(h, w)
             img = cv2.resize(img, None, fx=scale, fy=scale)
@@ -177,7 +178,7 @@ class OnePredict(object):
             preds = self.model(tensor)
             # print(111, preds)
 
-            self.my_post_process(preds)
+            # self.my_post_process(preds)
             outputs = self.post_processing.represent(batch=batch, pred=preds, is_output_polygon=self.polygon)
 
             # print('output', outputs)
@@ -203,13 +204,23 @@ class OnePredict(object):
 
 if __name__ == '__main__':
     import yaml
+    import time
 
-    os.environ['CUDA_VISIBLE_DEVICES'] = "3"
-    # img_path = "/home/shizai/data2/ocr_data/china_life_test_data/imgs/img_32.jpg"
-    img_path = 'test_imgs/wen.jpg'
+    os.environ['CUDA_VISIBLE_DEVICES'] = "1"
+    img_path = "/home/shizai/data2/ocr_data/china_life_test_data/imgs/img_32.jpg"
+    # img_path = 'test_imgs/wen.jpg'
     with open('config/db_resnet50.yaml', 'r') as fp:
         config = yaml.load(fp.read(), Loader=yaml.FullLoader)
     img_predict = OnePredict(configs=config, use_model='model_use_weights/DB_611_0.21.pth')
+
     outputs = img_predict.inference(
-        img_path=img_path, is_resize=False,
-        is_visualize=True, is_format_output=False)
+        img_path=img_path, is_resize=True,
+        is_visualize=False, is_format_output=False)
+
+    s1 = time.time()
+    for i in range(100):
+        outputs = img_predict.inference(
+            img_path=img_path, is_resize=True,
+            is_visualize=False, is_format_output=False)
+    e1 = time.time()
+    print('use time', e1 - s1)
