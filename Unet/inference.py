@@ -1,7 +1,7 @@
 # -*- coding:utf-8 -*-
 # @author :adolf
 import torch
-from transforms import get_transforms_3
+from data_aug.transforms import get_transforms_3
 
 from unet_model import UNet
 import cv2

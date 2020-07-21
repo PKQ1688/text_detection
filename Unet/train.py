@@ -10,7 +10,7 @@ from tqdm import tqdm
 
 from dataset import UNetSegmentationDataset as Dataset
 from loss import DiceLoss
-from transforms import get_transforms
+from data_aug.transforms import get_transforms
 from unet_model import UNet
 from utils import dsc
 import logging
@@ -18,7 +18,6 @@ import logging
 # from pytorchtools import EarlyStopping
 
 import cv2
-import utils
 import lr_scheduler
 
 import torch.nn as nn
