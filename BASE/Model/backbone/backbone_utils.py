@@ -65,12 +65,11 @@ def resnet_fpn_backbone(backbone_name, pretrained):
     return BackboneWithFPN(backbone, return_layers, in_channels_list, out_channels)
 
 
-if __name__ == '__main__':
-    import torch
-
-    x = torch.zeros(1, 3, 640, 640)
-    backbone = resnet_fpn_backbone(backbone_name='resnet18', pretrained=False)
-    y = backbone(x)
-    # print(y.keys())
-    print(backbone)
-    # print(mobile_fpn_backbone(x))
+# if __name__ == '__main__':
+#     import torch
+#
+#     x = torch.zeros(1, 3, 640, 640)
+#     backbone = resnet_fpn_backbone(backbone_name='resnet18', pretrained=False)
+#     y = backbone(x)
+#     print(y.keys())
+#     # print(mobile_fpn_backbone(x))
