@@ -43,9 +43,9 @@ class FCOS(nn.Module):
 
     def __init__(self, cfg, input_shape: Dict[str, ShapeSpec]):
         super().__init__()
-        self.in_features = cfg.MODEL.FCOS.IN_FEATURES
-        self.fpn_strides = cfg.MODEL.FCOS.FPN_STRIDES
-        self.yield_proposal = cfg.MODEL.FCOS.YIELD_PROPOSAL
+        self.in_features = cfg.MODEL.IN_FEATURES
+        self.fpn_strides = cfg.MODEL.FPN_STRIDES
+        self.yield_proposal = cfg.MODEL.YIELD_PROPOSAL
 
         self.fcos_head = FCOSHead(cfg, [input_shape[f] for f in self.in_features])
         self.in_channels_to_top_module = self.fcos_head.in_channels_to_top_module

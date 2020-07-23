@@ -51,28 +51,28 @@ class FCOSOutputs(nn.Module):
     def __init__(self, cfg):
         super(FCOSOutputs, self).__init__()
 
-        self.focal_loss_alpha = cfg.MODEL.FCOS.LOSS_ALPHA
-        self.focal_loss_gamma = cfg.MODEL.FCOS.LOSS_GAMMA
-        self.center_sample = cfg.MODEL.FCOS.CENTER_SAMPLE
-        self.radius = cfg.MODEL.FCOS.POS_RADIUS
-        self.pre_nms_thresh_train = cfg.MODEL.FCOS.INFERENCE_TH_TRAIN
-        self.pre_nms_topk_train = cfg.MODEL.FCOS.PRE_NMS_TOPK_TRAIN
-        self.post_nms_topk_train = cfg.MODEL.FCOS.POST_NMS_TOPK_TRAIN
-        self.loc_loss_func = IOULoss(cfg.MODEL.FCOS.LOC_LOSS_TYPE)
+        self.focal_loss_alpha = cfg.LOSS.LOSS_ALPHA
+        self.focal_loss_gamma = cfg.LOSS.LOSS_GAMMA
+        self.center_sample = cfg.LOSS.CENTER_SAMPLE
+        self.radius = cfg.MODEL.POS_RADIUS
+        self.pre_nms_thresh_train = cfg.MODEL.INFERENCE_TH_TRAIN
+        self.pre_nms_topk_train = cfg.MODEL.PRE_NMS_TOPK_TRAIN
+        self.post_nms_topk_train = cfg.MODEL.POST_NMS_TOPK_TRAIN
+        self.loc_loss_func = IOULoss(cfg.LOSS.LOC_LOSS_TYPE)
 
-        self.pre_nms_thresh_test = cfg.MODEL.FCOS.INFERENCE_TH_TEST
-        self.pre_nms_topk_test = cfg.MODEL.FCOS.PRE_NMS_TOPK_TEST
-        self.post_nms_topk_test = cfg.MODEL.FCOS.POST_NMS_TOPK_TEST
-        self.nms_thresh = cfg.MODEL.FCOS.NMS_TH
-        self.thresh_with_ctr = cfg.MODEL.FCOS.THRESH_WITH_CTR
+        self.pre_nms_thresh_test = cfg.MODEL.INFERENCE_TH_TEST
+        self.pre_nms_topk_test = cfg.MODEL.PRE_NMS_TOPK_TEST
+        self.post_nms_topk_test = cfg.MODEL.POST_NMS_TOPK_TEST
+        self.nms_thresh = cfg.MODEL.NMS_TH
+        self.thresh_with_ctr = cfg.MODEL.THRESH_WITH_CTR
 
-        self.num_classes = cfg.MODEL.FCOS.NUM_CLASSES
-        self.strides = cfg.MODEL.FCOS.FPN_STRIDES
+        self.num_classes = cfg.MODEL.NUM_CLASSES
+        self.strides = cfg.MODEL.FPN_STRIDES
 
         # generate sizes of interest
         soi = []
         prev_size = -1
-        for s in cfg.MODEL.FCOS.SIZES_OF_INTEREST:
+        for s in cfg.MODEL.SIZES_OF_INTEREST:
             soi.append([prev_size, s])
             prev_size = s
         soi.append([prev_size, INF])
