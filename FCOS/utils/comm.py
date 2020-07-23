@@ -117,7 +117,7 @@ def _pad_to_largest_tensor(tensor, group):
     """
     world_size = dist.get_world_size(group=group)
     assert (
-        world_size >= 1
+            world_size >= 1
     ), "comm.gather/all_gather must be called from ranks within the given group!"
     local_size = torch.tensor([tensor.numel()], dtype=torch.int64, device=tensor.device)
     size_list = [
@@ -261,3 +261,28 @@ def reduce_dict(input_dict, average=True):
             values /= world_size
         reduced_dict = {k: v for k, v in zip(names, values)}
     return reduced_dict
+
+
+def reduce_sum(tensor):
+    world_size = get_world_size()
+    if world_size < 2:
+        return tensor
+    tensor = tensor.clone()
+    dist.all_reduce(tensor, op=dist.ReduceOp.SUM)
+    return tensor
+
+
+def compute_locations(h, w, stride, device):
+    shifts_x = torch.arange(
+        0, w * stride, step=stride,
+        dtype=torch.float32, device=device
+    )
+    shifts_y = torch.arange(
+        0, h * stride, step=stride,
+        dtype=torch.float32, device=device
+    )
+    shift_y, shift_x = torch.meshgrid(shifts_y, shifts_x)
+    shift_x = shift_x.reshape(-1)
+    shift_y = shift_y.reshape(-1)
+    locations = torch.stack((shift_x, shift_y), dim=1) + stride // 2
+    return locations
