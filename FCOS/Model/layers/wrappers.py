@@ -13,3 +13,15 @@ def cat(tensors: List[torch.Tensor], dim: int = 0):
     if len(tensors) == 1:
         return tensors[0]
     return torch.cat(tensors, dim)
+
+
+class _NewEmptyTensorOp(torch.autograd.Function):
+    @staticmethod
+    def forward(ctx, x, new_shape):
+        ctx.shape = x.shape
+        return x.new_empty(new_shape)
+
+    @staticmethod
+    def backward(ctx, grad):
+        shape = ctx.shape
+        return _NewEmptyTensorOp.apply(grad, shape), None

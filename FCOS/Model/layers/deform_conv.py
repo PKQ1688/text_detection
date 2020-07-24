@@ -1,8 +1,11 @@
 import torch
 from torch import nn
-
+from torch.nn.modules.utils import _pair
+from torch.autograd import Function
+from torch.autograd.function import once_differentiable
 # from detectron2.layers import Conv2d
 from utils.env import TORCH_VERSION
+from .wrappers import _NewEmptyTensorOp
 
 
 class Conv2d(torch.nn.Conv2d):
@@ -64,18 +67,6 @@ class Conv2d(torch.nn.Conv2d):
         if self.activation is not None:
             x = self.activation(x)
         return x
-
-
-class _NewEmptyTensorOp(torch.autograd.Function):
-    @staticmethod
-    def forward(ctx, x, new_shape):
-        ctx.shape = x.shape
-        return x.new_empty(new_shape)
-
-    @staticmethod
-    def backward(ctx, grad):
-        shape = ctx.shape
-        return _NewEmptyTensorOp.apply(grad, shape), None
 
 
 class DFConv2d(nn.Module):
