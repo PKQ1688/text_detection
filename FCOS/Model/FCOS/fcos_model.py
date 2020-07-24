@@ -11,7 +11,7 @@ from Model.layers import ShapeSpec, NaiveSyncBatchNorm
 from Model.layers import DFConv2d, NaiveGroupNorm
 
 from utils.comm import compute_locations
-from Model.fcos_outputs import FCOSOutputs
+from Model.FCOS.fcos_outputs import FCOSOutputs
 
 
 class Scale(nn.Module):

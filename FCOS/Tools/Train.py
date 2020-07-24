@@ -1,5 +1,18 @@
 # -*- coding:utf-8 -*-
 # @author :adolf
-from Model.fcos_model import FCOS
+from Model.Backbone import build_resnet_fpn_backbone
+from Model.layers import ShapeSpec
+import yaml
+from addict import Dict
 
-model = FCOS(cfg="", input_shape=xx)
+config_file = "config.yaml"
+with open(config_file, 'r') as fp:
+    config = yaml.load(fp.read(), Loader=yaml.FullLoader)
+
+print(config)
+cfg = Dict(config)
+
+input_shape = ShapeSpec(channels=len(cfg.MODEL.PIXEL_MEAN))
+backbone = build_resnet_fpn_backbone(cfg, input_shape)
+print(backbone.output_shape())
+

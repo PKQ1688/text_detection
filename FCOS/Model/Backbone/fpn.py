@@ -4,7 +4,8 @@ import fvcore.nn.weight_init as weight_init
 import torch.nn.functional as F
 from torch import nn
 
-from detectron2.layers import Conv2d, ShapeSpec, get_norm
+# from detectron2.layers import Conv2d, ShapeSpec, get_norm
+from Model.layers import Conv2d, ShapeSpec, get_norm
 
 from .backbone import Backbone
 from .resnet import build_resnet_backbone
@@ -19,7 +20,7 @@ class FPN(Backbone):
     """
 
     def __init__(
-        self, bottom_up, in_features, out_channels, norm="", top_block=None, fuse_type="sum"
+            self, bottom_up, in_features, out_channels, norm="", top_block=None, fuse_type="sum"
     ):
         """
         Args:
@@ -125,7 +126,7 @@ class FPN(Backbone):
         prev_features = self.lateral_convs[0](x[0])
         results.append(self.output_convs[0](prev_features))
         for features, lateral_conv, output_conv in zip(
-            x[1:], self.lateral_convs[1:], self.output_convs[1:]
+                x[1:], self.lateral_convs[1:], self.output_convs[1:]
         ):
             top_down_features = F.interpolate(prev_features, scale_factor=2, mode="nearest")
             lateral_features = lateral_conv(features)
@@ -235,8 +236,49 @@ def build_retinanet_resnet_fpn_backbone(cfg, input_shape: ShapeSpec):
         bottom_up=bottom_up,
         in_features=in_features,
         out_channels=out_channels,
-        norm=cfg.MODEL.FPN.NORM,
+        norm=cfg.FPN.NORM,
         top_block=LastLevelP6P7(in_channels_p6p7, out_channels),
-        fuse_type=cfg.MODEL.FUSE_TYPE,
+        fuse_type=cfg.FPN.FUSE_TYPE,
+    )
+    return backbone
+
+
+def build_fcos_resnet_fpn_backbone(cfg, input_shape: ShapeSpec):
+    """
+    Args:
+        cfg: a detectron2 CfgNode
+
+    Returns:
+        backbone (Backbone): backbone module, must be a subclass of :class:`Backbone`.
+    """
+    if cfg.BACKBONE.ANTI_ALIAS:
+        # bottom_up = build_resnet_lpf_backbone(cfg, input_shape)
+        pass
+    elif cfg.RESNETS.DEFORM_INTERVAL > 1:
+        # bottom_up = build_resnet_interval_backbone(cfg, input_shape)
+        pass
+    elif cfg.MODEL.MOBILENET:
+        # bottom_up = build_mnv2_backbone(cfg, input_shape)
+        pass
+    else:
+        bottom_up = build_resnet_backbone(cfg, input_shape)
+    in_features = cfg.FPN.IN_FEATURES
+    out_channels = cfg.FPN.OUT_CHANNELS
+    top_levels = cfg.MODEL.TOP_LEVELS
+    in_channels_top = out_channels
+    if top_levels == 2:
+        top_block = LastLevelP6P7(in_channels_top, out_channels, "p5")
+    if top_levels == 1:
+        # top_block = LastLevelP6(in_channels_top, out_channels, "p5")
+        pass
+    elif top_levels == 0:
+        top_block = None
+    backbone = FPN(
+        bottom_up=bottom_up,
+        in_features=in_features,
+        out_channels=out_channels,
+        norm=cfg.FPN.NORM,
+        top_block=top_block,
+        fuse_type=cfg.FPN.FUSE_TYPE,
     )
     return backbone
