@@ -20,6 +20,9 @@ FPN:
   IN_FEATURES: ['res3', 'res4', 'res5']
   NORM: ""
   OUT_CHANNELS: 256
+TOP_MODULE:
+  DIM: 16
+  NAME: conv
 MODEL:
   MOBILENET: False
   PIXEL_MEAN: [103.53, 116.28, 123.675]

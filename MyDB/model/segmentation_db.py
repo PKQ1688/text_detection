@@ -6,7 +6,7 @@ from torch import nn
 
 class ConvHead(nn.Module):
     def __init__(self, in_channels, out_channels):
-        super().__init__()
+        super(ConvHead, self).__init__()
         self.conv = nn.Sequential(
             nn.Conv2d(in_channels=in_channels, out_channels=out_channels, kernel_size=1),
             nn.Sigmoid()
@@ -18,7 +18,7 @@ class ConvHead(nn.Module):
 
 class DBHead(nn.Module):
     def __init__(self, in_channels=256, k=50):
-        super().__init__()
+        super(DBHead, self).__init__()
         self.k = k
         self.binarize = nn.Sequential(
             nn.Conv2d(in_channels, in_channels // 4, 3, padding=1),

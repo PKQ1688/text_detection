@@ -5,9 +5,10 @@ from typing import List
 import torch
 
 
-def cat(tensors: List[torch.Tensor], dim: int = 0):
+def cat(tensors: object, dim: object = 0) -> object:
     """
     Efficient version of torch.cat that avoids a copy if there is only a single element in a list
+    :rtype:
     """
     assert isinstance(tensors, (list, tuple))
     if len(tensors) == 1:
